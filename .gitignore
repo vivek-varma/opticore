@@ -44,3 +44,27 @@ htmlcov/
 
 HANDOFF_TO_CLAUDE_CODE.md
 
+# Secrets / credentials (never commit)
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+secrets.yaml
+
+# Local caches / scratch
+*.sqlite
+*.db
+cache/
+scratch/
+notes.md
+TODO_local.md
+
+# Personal AI-assistant settings
+.claude/settings.local.json
+.cursor/
+.aider*
+
+# Tool-specific symlinks to AGENT.md (create locally: `ln -s AGENT.md CLAUDE.md`)
+/CLAUDE.md
+

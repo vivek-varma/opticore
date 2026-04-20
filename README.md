@@ -135,10 +135,18 @@ pytest tests/python/
 
 ## Roadmap
 
-- [x] **Phase 1** — BSM pricing, Jaeckel IV, Greeks, IBKR adapter, plots
+- [x] **Phase 1** — BSM pricing, IV, Greeks, IBKR adapter, plots
 - [ ] **Phase 2** — Vol surface (SVI, SABR, SSVI), arbitrage detection, 3D visualizer
 - [ ] **Phase 3** — Heston model, barriers, Asians, Monte Carlo
 - [ ] **Phase 4** — More data providers (Yahoo, Polygon, Deribit), strategy builder
+
+Full details, acceptance criteria, and non-goals: [**ROADMAP.md**](ROADMAP.md).
+
+## Project context & decisions
+
+- [**AGENT.md**](AGENT.md) — project state, architecture, gotchas (read this first if you're jumping in cold)
+- [**ROADMAP.md**](ROADMAP.md) — phase-by-phase scope and acceptance criteria
+- [**docs/decisions/**](docs/decisions/) — Architecture Decision Records (why nanobind, why NaN-not-exceptions, why Apache-2.0, etc.)
 
 ## Contributing
 
