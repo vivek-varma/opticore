@@ -453,14 +453,14 @@ TEST_CASE("Monotonicity: option price increases in time to expiry", "[monotonici
 // CATEGORY 7: Boundary and edge cases
 // ============================================================================
 
-TEST_CASE("Boundary: deep ITM call ≈ S - K*exp(-rT)", "[boundary]") {
+TEST_CASE("Boundary: deep ITM call ~= S - K*exp(-rT)", "[boundary]") {
     double S = 100, K = 10, T = 1.0, r = 0.05, vol = 0.20;
     double price = bsm_call(S, K, T, r, vol);
     double intrinsic_pv = S - K * std::exp(-r * T);
     REQUIRE(std::abs(price - intrinsic_pv) < 0.01);
 }
 
-TEST_CASE("Boundary: deep OTM call ≈ 0", "[boundary]") {
+TEST_CASE("Boundary: deep OTM call ~= 0", "[boundary]") {
     // 100 spot, 1000 strike, 1y, 5% rate, 20% vol → astronomically OTM
     // Actual computed value ≈ 5.4e-29 (verified independently)
     double S = 100, K = 1000, T = 1.0, r = 0.05, vol = 0.20;
