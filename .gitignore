@@ -1,0 +1,43 @@
+# Build
+build/
+dist/
+*.egg-info/
+*.so
+*.dylib
+*.dll
+*.pyd
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+.coverage
+htmlcov/
+*.gcov
+*.gcda
+*.gcno
+
+# Notebooks
+.ipynb_checkpoints/

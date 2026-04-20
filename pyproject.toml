@@ -1,0 +1,67 @@
+[build-system]
+requires = ["scikit-build-core>=0.9", "nanobind>=2.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "opticore"
+version = "0.1.0"
+description = "High-performance options pricing, IV solver, and Greeks — C++20 core with Pythonic API"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+authors = [{name = "OptiCore Contributors"}]
+keywords = ["options", "pricing", "black-scholes", "implied-volatility", "greeks", "quantitative-finance"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+ibkr = ["ib_async>=2.0", "nest_asyncio>=1.5"]
+viz = ["matplotlib>=3.7"]
+all = ["opticore[ibkr,viz]"]
+dev = [
+    "opticore[all]",
+    "pytest>=7.0",
+    "pytest-benchmark",
+    "ruff",
+    "mypy",
+]
+
+[project.urls]
+Homepage = "https://github.com/opticore/opticore"
+Documentation = "https://opticore.readthedocs.io"
+Repository = "https://github.com/opticore/opticore"
+
+[tool.scikit-build]
+minimum-version = "0.9"
+build-dir = "build/{wheel_tag}"
+
+[tool.scikit-build.cmake.define]
+OPTICORE_BUILD_TESTS = "OFF"
+OPTICORE_BUILD_PYTHON = "ON"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]
