@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "opticore"
-version = "0.1.0"
+version = "0.2.0"
 description = "High-performance options pricing, IV solver, and Greeks — C++20 core with Pythonic API"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -65,3 +65,32 @@ select = ["E", "F", "I", "W"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
+
+# ── cibuildwheel ──────────────────────────────────────────────────────────────
+# Config used by `cibuildwheel` in .github/workflows/release.yml to produce
+# wheels for CPython 3.10–3.13 on linux/macos/windows. See also RELEASING.md.
+[tool.cibuildwheel]
+# Target CPython 3.10–3.13. No PyPy (nanobind C++20 toolchain overhead).
+build = "cp310-* cp311-* cp312-* cp313-*"
+
+# Skip 32-bit builds (no retail demand) and musllinux/Alpine (see RELEASING.md
+# for why; revisit if users ask).
+skip = ["*-musllinux_*", "*_i686", "*-win32"]
+
+# Architectures per OS. macos-latest runs on ARM; GH still builds x86_64 wheels
+# via cross-compile for broader compatibility.
+archs = ["auto64"]
+
+# Smoke-test every wheel post-build. Skip test_plot.py because it needs
+# matplotlib — full plot coverage lives in the regular CI (ci.yml), we don't
+# need to reinstall the heavy matplotlib wheel into each build matrix cell.
+test-requires = "pytest"
+test-command = "pytest {project}/tests/python --ignore={project}/tests/python/test_plot.py -q"
+
+# Build verbosity helps debug Windows failures without re-running CI.
+build-verbosity = 1
+
+[tool.cibuildwheel.linux]
+# manylinux_2_17 (==manylinux2014) is the sweet spot: works on every glibc
+# distro in the last ~10 years, has prebuilt NumPy/pandas wheels.
+manylinux-x86_64-image = "manylinux2014"
