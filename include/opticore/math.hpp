@@ -26,7 +26,11 @@ inline constexpr double DBL_EPS     = std::numeric_limits<double>::epsilon();
 // ============================================================================
 
 /// Standard normal PDF: phi(x) = exp(-x^2/2) / sqrt(2*pi)
-[[nodiscard]] inline constexpr double norm_pdf(double x) noexcept {
+///
+/// Note: not `constexpr` because `std::exp` is not constexpr in standard C++20
+/// (GCC/Clang accept it as an extension, MSVC does not — see CI build errors
+/// on Windows prior to 2026-04). C++26 is expected to make it constexpr.
+[[nodiscard]] inline double norm_pdf(double x) noexcept {
     return INV_SQRT2PI * std::exp(-0.5 * x * x);
 }
 
@@ -108,8 +112,11 @@ template <typename T>
     return std::max(lo, std::min(val, hi));
 }
 
-/// Check if a double is valid (not NaN)
-[[nodiscard]] inline constexpr bool is_valid(double x) noexcept {
+/// Check if a double is valid (not NaN).
+///
+/// Note: not `constexpr` because `std::isnan` is not constexpr in standard C++20
+/// (GCC/Clang accept it as an extension, MSVC does not).
+[[nodiscard]] inline bool is_valid(double x) noexcept {
     return !std::isnan(x);
 }
 
