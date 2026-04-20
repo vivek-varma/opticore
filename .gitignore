@@ -68,3 +68,6 @@ TODO_local.md
 # Tool-specific symlinks to AGENT.md (create locally: `ln -s AGENT.md CLAUDE.md`)
 /CLAUDE.md
 
+# Internal maintainer docs (not for public repo)
+/RELEASING.md
+

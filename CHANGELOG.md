@@ -13,7 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Packaging: `cibuildwheel` config + release workflow builds wheels for CPython
   3.10–3.13 on linux (manylinux2014) / macos / windows on tag push
 - TestPyPI dry-run via `workflow_dispatch` input `publish_to_testpypi`
-- `RELEASING.md` documenting the release process
 - CI: upload CTest and pytest logs as artifacts on failure
 - CI status badge in README
 - Project context docs: `AGENT.md`, `ROADMAP.md`, 5 ADRs in `docs/decisions/`
