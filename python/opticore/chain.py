@@ -179,8 +179,10 @@ def enrich(
     # ── Greeks (using solved IV) ─────────────────────────────────────────
     from opticore._core import _greeks_scalar
 
-    greek_cols = {"delta": [], "gamma": [], "theta": [], "vega": [], "rho": []}
-    model_price = []
+    greek_cols: dict[str, list[float]] = {
+        "delta": [], "gamma": [], "theta": [], "vega": [], "rho": []
+    }
+    model_price: list[float] = []
 
     for i in range(len(df)):
         v = iv_values[i]

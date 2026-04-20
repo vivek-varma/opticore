@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Type stubs (`__init__.pyi`, `_core.pyi`) and `py.typed` marker for PEP 561
+  compliance. IDEs and `mypy` now see real types for all public functions
+  instead of `Any`, including `pd.DataFrame` returns and NumPy array overloads.
+- `[tool.mypy]` config in `pyproject.toml`; `mypy` runs clean on
+  `python/opticore` + `tests/python`.
+
+### Changed
+- `plot.payoff` param `spot_range` is now `Optional[tuple[float, float]]`
+  (was implicitly Optional — PEP 484 no longer allows that).
+- `enrich()`'s internal `greek_cols` dict now has an explicit type annotation.
+
 ## [0.2.0] - 2026-04-XX
 
 ### Added

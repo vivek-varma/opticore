@@ -88,7 +88,7 @@ def smile(
 
 def payoff(
     legs: Sequence[Leg],
-    spot_range: tuple[float, float] = None,
+    spot_range: Optional[tuple[float, float]] = None,
     num_points: int = 200,
     ax=None,
 ):
