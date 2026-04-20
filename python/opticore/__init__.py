@@ -14,23 +14,24 @@ Quick start:
 
 __version__ = "0.1.0"
 
+from typing import NamedTuple, Union
+
 import numpy as np
-from typing import Union, NamedTuple
 
 # Import C++ core (compiled via nanobind)
 from opticore._core import (
-    _bsm_price_scalar,
     _bsm_price_batch,
-    _implied_vol_scalar,
-    _implied_vol_batch,
-    _greeks_scalar,
+    _bsm_price_scalar,
     _greeks_batch,
+    _greeks_scalar,
+    _implied_vol_batch,
+    _implied_vol_scalar,
 )
-
 
 # ════════════════════════════════════════════════════════════════════════════
 # Public types
 # ════════════════════════════════════════════════════════════════════════════
+
 
 class GreeksResult(NamedTuple):
     """All BSM Greeks computed in a single pass."""
@@ -39,22 +40,23 @@ class GreeksResult(NamedTuple):
     delta: float
     gamma: float
     theta: float  # per calendar day
-    vega: float   # per 1% vol move
-    rho: float    # per 1% rate move
+    vega: float  # per 1% vol move
+    rho: float  # per 1% rate move
 
 
 class Leg(NamedTuple):
     """A single leg of an options strategy for payoff diagrams."""
 
-    kind: str       # "call" or "put"
+    kind: str  # "call" or "put"
     strike: float
-    qty: int = 1    # positive = long, negative = short
+    qty: int = 1  # positive = long, negative = short
     premium: float = 0.0
 
 
 # ════════════════════════════════════════════════════════════════════════════
 # Helpers
 # ════════════════════════════════════════════════════════════════════════════
+
 
 def _parse_kind(kind) -> bool:
     """Convert 'call'/'put' string to bool (True=call)."""
@@ -77,6 +79,7 @@ def _is_scalar(*args) -> bool:
 # ════════════════════════════════════════════════════════════════════════════
 # price()
 # ════════════════════════════════════════════════════════════════════════════
+
 
 def price(
     spot: Union[float, np.ndarray],
@@ -126,8 +129,13 @@ def price(
 
     if _is_scalar(spot, strike, expiry, vol):
         return _bsm_price_scalar(
-            float(spot), float(strike), float(expiry),
-            float(rate), float(vol), float(div_yield), is_call,
+            float(spot),
+            float(strike),
+            float(expiry),
+            float(rate),
+            float(vol),
+            float(div_yield),
+            is_call,
         )
 
     # Vectorized path: broadcast inputs to common shape
@@ -144,10 +152,17 @@ def price(
         if len(vol_a) == 1:
             strike_a = np.broadcast_to(strike_a, n).copy()
             expiry_a = np.broadcast_to(expiry_a, n).copy()
-            return np.asarray(_bsm_price_batch(
-                float(spot), strike_a, expiry_a,
-                float(rate), float(vol), float(div_yield), is_call,
-            ))
+            return np.asarray(
+                _bsm_price_batch(
+                    float(spot),
+                    strike_a,
+                    expiry_a,
+                    float(rate),
+                    float(vol),
+                    float(div_yield),
+                    is_call,
+                )
+            )
 
     # General case: element-wise
     spot_a = np.broadcast_to(spot_a, n).copy().astype(np.float64)
@@ -158,8 +173,13 @@ def price(
     result = np.empty(n, dtype=np.float64)
     for i in range(n):
         result[i] = _bsm_price_scalar(
-            spot_a[i], strike_a[i], expiry_a[i],
-            float(rate), vol_a[i], float(div_yield), is_call,
+            spot_a[i],
+            strike_a[i],
+            expiry_a[i],
+            float(rate),
+            vol_a[i],
+            float(div_yield),
+            is_call,
         )
     return result
 
@@ -167,6 +187,7 @@ def price(
 # ════════════════════════════════════════════════════════════════════════════
 # iv()
 # ════════════════════════════════════════════════════════════════════════════
+
 
 def iv(
     price_val: Union[float, np.ndarray],
@@ -213,8 +234,13 @@ def iv(
 
     if _is_scalar(price_val, spot, strike, expiry):
         return _implied_vol_scalar(
-            float(price_val), float(spot), float(strike), float(expiry),
-            float(rate), float(div_yield), is_call,
+            float(price_val),
+            float(spot),
+            float(strike),
+            float(expiry),
+            float(rate),
+            float(div_yield),
+            is_call,
         )
 
     # Vectorized
@@ -236,6 +262,7 @@ def iv(
 # ════════════════════════════════════════════════════════════════════════════
 # greeks()
 # ════════════════════════════════════════════════════════════════════════════
+
 
 def greeks(
     spot: float,
@@ -270,8 +297,13 @@ def greeks(
     """
     is_call = _parse_kind(kind)
     result = _greeks_scalar(
-        float(spot), float(strike), float(expiry),
-        float(rate), float(vol), float(div_yield), is_call,
+        float(spot),
+        float(strike),
+        float(expiry),
+        float(rate),
+        float(vol),
+        float(div_yield),
+        is_call,
     )
     return GreeksResult(*result)
 
@@ -284,7 +316,7 @@ def greeks_table(
     vol: Union[float, np.ndarray],
     kind: str = "call",
     div_yield: float = 0.0,
-) -> "pd.DataFrame":
+) -> "pandas.DataFrame":  # noqa: F821
     """Compute Greeks for multiple options, returned as a DataFrame.
 
     Parameters
@@ -313,19 +345,27 @@ def greeks_table(
     ic = np.full(n, is_call, dtype=bool)
 
     price_arr, delta, gamma, theta, vega, rho = _greeks_batch(
-        s, k, t, float(rate), v, float(div_yield), ic,
+        s,
+        k,
+        t,
+        float(rate),
+        v,
+        float(div_yield),
+        ic,
     )
 
-    return pd.DataFrame({
-        "strike": k,
-        "expiry": t,
-        "price": np.asarray(price_arr),
-        "delta": np.asarray(delta),
-        "gamma": np.asarray(gamma),
-        "theta": np.asarray(theta),
-        "vega": np.asarray(vega),
-        "rho": np.asarray(rho),
-    })
+    return pd.DataFrame(
+        {
+            "strike": k,
+            "expiry": t,
+            "price": np.asarray(price_arr),
+            "delta": np.asarray(delta),
+            "gamma": np.asarray(gamma),
+            "theta": np.asarray(theta),
+            "vega": np.asarray(vega),
+            "rho": np.asarray(rho),
+        }
+    )
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -333,10 +373,9 @@ def greeks_table(
 # ════════════════════════════════════════════════════════════════════════════
 
 # Chain operations (pure Python, no C++ dependency)
-from opticore.chain import fetch_chain, enrich, check_connection  # noqa: E402
-
 # Make plot submodule importable
 from opticore import plot  # noqa: F401, E402
+from opticore.chain import check_connection, enrich, fetch_chain  # noqa: E402
 
 __all__ = [
     "price",

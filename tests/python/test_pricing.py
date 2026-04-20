@@ -8,6 +8,7 @@ import pytest
 def oc():
     """Import opticore."""
     import opticore
+
     return opticore
 
 
@@ -40,8 +41,10 @@ class TestPrice:
 
     def test_zero_expiry(self, oc):
         """At expiry: call = max(S-K, 0)."""
-        assert oc.price(spot=105, strike=100, expiry=0.0, rate=0.05, vol=0.20, kind="call") == pytest.approx(5.0)
-        assert oc.price(spot=95, strike=100, expiry=0.0, rate=0.05, vol=0.20, kind="call") == pytest.approx(0.0)
+        itm = oc.price(spot=105, strike=100, expiry=0.0, rate=0.05, vol=0.20, kind="call")
+        otm = oc.price(spot=95, strike=100, expiry=0.0, rate=0.05, vol=0.20, kind="call")
+        assert itm == pytest.approx(5.0)
+        assert otm == pytest.approx(0.0)
 
     def test_put_positive(self, oc):
         """OTM put has positive value."""
@@ -74,14 +77,19 @@ class TestIV:
     def test_vectorized(self, oc):
         """Vectorized IV solve."""
         vols = np.array([0.15, 0.20, 0.25, 0.30, 0.35])
-        prices = np.array([
-            oc.price(spot=100, strike=100, expiry=1.0, rate=0.05, vol=v, kind="call")
-            for v in vols
-        ])
+        prices = np.array(
+            [
+                oc.price(spot=100, strike=100, expiry=1.0, rate=0.05, vol=v, kind="call")
+                for v in vols
+            ]
+        )
         solved = oc.iv(
-            price_val=prices, spot=np.full(5, 100.0),
-            strike=np.full(5, 100.0), expiry=np.full(5, 1.0),
-            rate=0.05, kind="call",
+            price_val=prices,
+            spot=np.full(5, 100.0),
+            strike=np.full(5, 100.0),
+            expiry=np.full(5, 1.0),
+            rate=0.05,
+            kind="call",
         )
         np.testing.assert_allclose(solved, vols, atol=1e-6)
 
@@ -132,6 +140,7 @@ class TestGreeksTable:
     def test_returns_dataframe(self, oc):
         """greeks_table() returns a pandas DataFrame."""
         import pandas as pd
+
         strikes = np.arange(90.0, 111.0)
         df = oc.greeks_table(spot=100, strike=strikes, expiry=0.5, rate=0.05, vol=0.20, kind="call")
         assert isinstance(df, pd.DataFrame)

@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-import numpy as np
 from typing import Optional, Sequence
 
-from opticore import Leg, price as oc_price, greeks as oc_greeks
+import numpy as np
+
+from opticore import Leg
+from opticore import greeks as oc_greeks
 
 
 def _get_plt():
     """Lazy import matplotlib."""
     try:
         import matplotlib.pyplot as plt
+
         return plt
     except ImportError:
         raise ImportError(
@@ -159,8 +162,7 @@ def payoff(
         y0, y1 = net_pnl[idx], net_pnl[idx + 1]
         be = x0 - y0 * (x1 - x0) / (y1 - y0)
         ax.axvline(x=be, color="red", linestyle="--", alpha=0.5, linewidth=1)
-        ax.annotate(f"BE: {be:.1f}", xy=(be, 0), fontsize=9,
-                    ha="center", va="bottom", color="red")
+        ax.annotate(f"BE: {be:.1f}", xy=(be, 0), fontsize=9, ha="center", va="bottom", color="red")
 
     # Mark strikes
     for leg in legs:

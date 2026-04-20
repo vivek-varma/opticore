@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import warnings
 from datetime import datetime, timezone
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -31,6 +29,7 @@ def check_connection(
     >>> print(status["message"])
     """
     from opticore.data.ibkr import check_connection as _check
+
     return _check(host=host, port=port, client_id=client_id, timeout=timeout)
 
 
@@ -82,6 +81,7 @@ def fetch_chain(
     """
     if provider.lower() == "ibkr":
         from opticore.data.ibkr import fetch_ibkr_chain
+
         return fetch_ibkr_chain(
             symbol=symbol,
             host=host,
@@ -163,8 +163,13 @@ def enrich(
         kind_str = "call" if is_call_arr[i] else "put"
         try:
             iv_values[i] = oc_iv(
-                price_val=prices[i], spot=spots[i], strike=strikes[i],
-                expiry=ttes[i], rate=rate, kind=kind_str, div_yield=div_yield,
+                price_val=prices[i],
+                spot=spots[i],
+                strike=strikes[i],
+                expiry=ttes[i],
+                rate=rate,
+                kind=kind_str,
+                div_yield=div_yield,
             )
         except Exception:
             iv_values[i] = np.nan
@@ -186,8 +191,13 @@ def enrich(
             continue
 
         result = _greeks_scalar(
-            spots[i], strikes[i], ttes[i],
-            rate, v, div_yield, bool(is_call_arr[i]),
+            spots[i],
+            strikes[i],
+            ttes[i],
+            rate,
+            v,
+            div_yield,
+            bool(is_call_arr[i]),
         )
         model_price.append(result[0])
         greek_cols["delta"].append(result[1])

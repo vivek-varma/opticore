@@ -1,11 +1,11 @@
 """Tests for chain enrichment (oc.enrich) using synthetic data."""
 
-import numpy as np
-import pandas as pd
-import pytest
 from datetime import datetime, timedelta, timezone
 
+import numpy as np
 import opticore as oc
+import pandas as pd
+import pytest
 
 
 def _make_chain(n_strikes=10, underlying=100.0, expiry_days=30):
@@ -22,22 +22,28 @@ def _make_chain(n_strikes=10, underlying=100.0, expiry_days=30):
             vol = 0.20
             tte = expiry_days / 365.25
             price = oc.price(
-                spot=underlying, strike=k, expiry=tte,
-                rate=0.05, vol=vol, kind=kind,
+                spot=underlying,
+                strike=k,
+                expiry=tte,
+                rate=0.05,
+                vol=vol,
+                kind=kind,
             )
             # Simulate bid/ask spread
-            rows.append({
-                "symbol": "TEST",
-                "strike": k,
-                "expiry": expiry_str,
-                "kind": kind,
-                "bid": max(price * 0.95, 0.01),
-                "ask": price * 1.05,
-                "last": price,
-                "volume": 100,
-                "open_interest": 500,
-                "underlying_price": underlying,
-            })
+            rows.append(
+                {
+                    "symbol": "TEST",
+                    "strike": k,
+                    "expiry": expiry_str,
+                    "kind": kind,
+                    "bid": max(price * 0.95, 0.01),
+                    "ask": price * 1.05,
+                    "last": price,
+                    "volume": 100,
+                    "open_interest": 500,
+                    "underlying_price": underlying,
+                }
+            )
 
     return pd.DataFrame(rows)
 
@@ -49,8 +55,19 @@ class TestEnrich:
         chain = _make_chain()
         enriched = oc.enrich(chain, rate=0.05)
 
-        expected_cols = {"mid", "tte", "moneyness", "intrinsic", "iv",
-                         "model_price", "delta", "gamma", "theta", "vega", "rho"}
+        expected_cols = {
+            "mid",
+            "tte",
+            "moneyness",
+            "intrinsic",
+            "iv",
+            "model_price",
+            "delta",
+            "gamma",
+            "theta",
+            "vega",
+            "rho",
+        }
         assert expected_cols.issubset(set(enriched.columns))
 
     def test_preserves_original_columns(self):
@@ -102,8 +119,7 @@ class TestEnrich:
 
         # Filter to cases where IV solve should work well (not deep ITM/OTM)
         atm = enriched[
-            (enriched["moneyness"] > 0.9) & (enriched["moneyness"] < 1.1)
-            & enriched["iv"].notna()
+            (enriched["moneyness"] > 0.9) & (enriched["moneyness"] < 1.1) & enriched["iv"].notna()
         ]
         # Should recover ~0.20 within a few percent (bid/ask spread distorts slightly)
         assert len(atm) > 0
@@ -123,17 +139,13 @@ class TestEnrich:
     def test_call_delta_positive(self):
         chain = _make_chain()
         enriched = oc.enrich(chain, rate=0.05)
-        valid_calls = enriched[
-            (enriched["kind"] == "call") & enriched["delta"].notna()
-        ]
+        valid_calls = enriched[(enriched["kind"] == "call") & enriched["delta"].notna()]
         assert (valid_calls["delta"] > 0).all()
 
     def test_put_delta_negative(self):
         chain = _make_chain()
         enriched = oc.enrich(chain, rate=0.05)
-        valid_puts = enriched[
-            (enriched["kind"] == "put") & enriched["delta"].notna()
-        ]
+        valid_puts = enriched[(enriched["kind"] == "put") & enriched["delta"].notna()]
         assert (valid_puts["delta"] < 0).all()
 
     def test_does_not_modify_original(self):
@@ -161,6 +173,7 @@ class TestFetchChain:
     def test_ibkr_import_error(self, monkeypatch):
         """fetch_chain('ibkr') raises ImportError if ib_async not installed."""
         import builtins
+
         real_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):
@@ -171,6 +184,7 @@ class TestFetchChain:
         monkeypatch.setattr(builtins, "__import__", mock_import)
         # Need to also clear cached import
         import sys
+
         sys.modules.pop("ib_async", None)
         sys.modules.pop("opticore.data.ibkr", None)
 

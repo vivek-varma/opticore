@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import warnings
-from datetime import datetime
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -31,6 +28,7 @@ def _patch_event_loop():
     except ImportError:
         import subprocess
         import sys
+
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "-q", "nest_asyncio"],
         )
@@ -78,9 +76,7 @@ def check_connection(
             "connected": False,
             "account": None,
             "server_version": None,
-            "message": (
-                "ib_async not installed. Run: pip install opticore[ibkr]"
-            ),
+            "message": ("ib_async not installed. Run: pip install opticore[ibkr]"),
         }
 
     _patch_event_loop()
@@ -89,7 +85,10 @@ def check_connection(
     try:
         ib.RequestTimeout = timeout
         ib.connect(
-            host, port, clientId=client_id, timeout=timeout,
+            host,
+            port,
+            clientId=client_id,
+            timeout=timeout,
             readonly=True,
         )
         accounts = ib.managedAccounts()
@@ -101,8 +100,7 @@ def check_connection(
             "account": account,
             "server_version": server_version,
             "message": (
-                f"Connected to IBKR at {host}:{port} "
-                f"(account: {account}, server v{server_version})"
+                f"Connected to IBKR at {host}:{port} (account: {account}, server v{server_version})"
             ),
         }
     except Exception as e:
@@ -168,11 +166,10 @@ def fetch_ibkr_chain(
         Option chain data.
     """
     try:
-        from ib_async import IB, Stock, Option, util
+        from ib_async import IB, Option, Stock
     except ImportError:
         raise ImportError(
-            "ib_async is required for IBKR data. "
-            "Install with: pip install opticore[ibkr]"
+            "ib_async is required for IBKR data. Install with: pip install opticore[ibkr]"
         )
 
     _patch_event_loop()
@@ -199,14 +196,11 @@ def fetch_ibkr_chain(
             underlying_price = ticker.close
         if np.isnan(underlying_price) or underlying_price <= 0:
             raise ValueError(
-                f"Could not get price for {symbol}. "
-                f"Check your market data subscription."
+                f"Could not get price for {symbol}. Check your market data subscription."
             )
 
         # ── Get option chain parameters ──────────────────────────────────
-        chains = ib.reqSecDefOptParams(
-            stock.symbol, "", stock.secType, stock.conId
-        )
+        chains = ib.reqSecDefOptParams(stock.symbol, "", stock.secType, stock.conId)
 
         # Find the SMART chain
         chain = None
@@ -239,8 +233,12 @@ def fetch_ibkr_chain(
                 for right in ["C", "P"]:
                     contracts.append(
                         Option(
-                            symbol, exp, strike, right,
-                            "SMART", currency="USD",
+                            symbol,
+                            exp,
+                            strike,
+                            right,
+                            "SMART",
+                            currency="USD",
                         )
                     )
 
@@ -286,18 +284,20 @@ def fetch_ibkr_chain(
             vol = t.volume if t.volume not in (None, -1) else 0
             oi = t.open_interest if hasattr(t, "open_interest") else 0
 
-            rows.append({
-                "symbol": symbol,
-                "strike": float(c.strike),
-                "expiry": c.lastTradeDateOrContractMonth,
-                "kind": "call" if c.right == "C" else "put",
-                "bid": bid,
-                "ask": ask,
-                "last": last,
-                "volume": int(vol) if vol else 0,
-                "open_interest": int(oi) if oi else 0,
-                "underlying_price": underlying_price,
-            })
+            rows.append(
+                {
+                    "symbol": symbol,
+                    "strike": float(c.strike),
+                    "expiry": c.lastTradeDateOrContractMonth,
+                    "kind": "call" if c.right == "C" else "put",
+                    "bid": bid,
+                    "ask": ask,
+                    "last": last,
+                    "volume": int(vol) if vol else 0,
+                    "open_interest": int(oi) if oi else 0,
+                    "underlying_price": underlying_price,
+                }
+            )
 
         df = pd.DataFrame(rows)
 
@@ -308,8 +308,10 @@ def fetch_ibkr_chain(
             mask = (df["mid"] <= 0) & (df["last"] > 0)
             df.loc[mask, "mid"] = df.loc[mask, "last"]
 
-        print(f"Fetched {len(df)} option contracts for {symbol} "
-              f"({len(expirations)} expiries, {len(strikes)} strikes)")
+        print(
+            f"Fetched {len(df)} option contracts for {symbol} "
+            f"({len(expirations)} expiries, {len(strikes)} strikes)"
+        )
 
         return df
 

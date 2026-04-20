@@ -1,10 +1,10 @@
 """Tests for opticore.plot functions."""
 
+import matplotlib
 import numpy as np
 import pandas as pd
 import pytest
 
-import matplotlib
 matplotlib.use("Agg")  # non-interactive backend for CI
 
 import opticore as oc
@@ -19,14 +19,16 @@ def enriched_df():
     for exp_str in ["20260501", "20260601"]:
         for k in strikes:
             iv = 0.20 + 0.002 * (k - 100) ** 2 / 100  # synthetic smile
-            rows.append({
-                "strike": k,
-                "expiry": exp_str,
-                "kind": "call",
-                "iv": iv,
-                "moneyness": k / 100.0,
-                "underlying_price": 100.0,
-            })
+            rows.append(
+                {
+                    "strike": k,
+                    "expiry": exp_str,
+                    "kind": "call",
+                    "iv": iv,
+                    "moneyness": k / 100.0,
+                    "underlying_price": 100.0,
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -37,6 +39,7 @@ class TestSmile:
         fig = oc_plot.smile(enriched_df)
         assert fig is not None
         import matplotlib.figure
+
         assert isinstance(fig, matplotlib.figure.Figure)
 
     def test_single_expiry(self, enriched_df):
@@ -53,15 +56,20 @@ class TestSmile:
 
     def test_custom_ax(self, enriched_df):
         import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
         result = oc_plot.smile(enriched_df, ax=ax)
         assert result is fig
 
     def test_empty_after_filter_raises(self):
-        df = pd.DataFrame({
-            "strike": [100], "expiry": ["20260501"],
-            "kind": ["call"], "iv": [np.nan],
-        })
+        df = pd.DataFrame(
+            {
+                "strike": [100],
+                "expiry": ["20260501"],
+                "kind": ["call"],
+                "iv": [np.nan],
+            }
+        )
         with pytest.raises(ValueError, match="No data"):
             oc_plot.smile(df)
 
@@ -74,6 +82,7 @@ class TestPayoff:
         fig = oc_plot.payoff(legs)
         assert fig is not None
         import matplotlib.figure
+
         assert isinstance(fig, matplotlib.figure.Figure)
 
     def test_straddle(self):
@@ -128,17 +137,28 @@ class TestGreek:
 
     def test_delta_call(self):
         fig = oc_plot.greek(
-            "delta", spot_range=(80, 120), strike=100,
-            expiry=0.5, rate=0.05, vol=0.2, kind="call",
+            "delta",
+            spot_range=(80, 120),
+            strike=100,
+            expiry=0.5,
+            rate=0.05,
+            vol=0.2,
+            kind="call",
         )
         assert fig is not None
         import matplotlib.figure
+
         assert isinstance(fig, matplotlib.figure.Figure)
 
     def test_both_kinds(self):
         fig = oc_plot.greek(
-            "delta", spot_range=(80, 120), strike=100,
-            expiry=0.5, rate=0.05, vol=0.2, kind="both",
+            "delta",
+            spot_range=(80, 120),
+            strike=100,
+            expiry=0.5,
+            rate=0.05,
+            vol=0.2,
+            kind="both",
         )
         ax = fig.get_axes()[0]
         # "both" should produce 2 lines (call + put) + 1 vertical strike line
@@ -148,23 +168,37 @@ class TestGreek:
     def test_all_greeks(self):
         for gname in ("price", "delta", "gamma", "theta", "vega", "rho"):
             fig = oc_plot.greek(
-                gname, spot_range=(80, 120), strike=100,
-                expiry=0.5, rate=0.05, vol=0.2,
+                gname,
+                spot_range=(80, 120),
+                strike=100,
+                expiry=0.5,
+                rate=0.05,
+                vol=0.2,
             )
             assert fig is not None
 
     def test_invalid_greek_raises(self):
         with pytest.raises(ValueError, match="greek must be one of"):
             oc_plot.greek(
-                "charm", spot_range=(80, 120), strike=100,
-                expiry=0.5, rate=0.05, vol=0.2,
+                "charm",
+                spot_range=(80, 120),
+                strike=100,
+                expiry=0.5,
+                rate=0.05,
+                vol=0.2,
             )
 
     def test_custom_ax(self):
         import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
         result = oc_plot.greek(
-            "gamma", spot_range=(80, 120), strike=100,
-            expiry=0.5, rate=0.05, vol=0.2, ax=ax,
+            "gamma",
+            spot_range=(80, 120),
+            strike=100,
+            expiry=0.5,
+            rate=0.05,
+            vol=0.2,
+            ax=ax,
         )
         assert result is fig
