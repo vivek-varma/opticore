@@ -63,9 +63,10 @@ static double max_option_price(
     }
 }
 
-/// Initial guess using Brenner-Subrahmanyam approximation
+/// Initial guess using Brenner-Subrahmanyam approximation.
+/// Note: strike is not needed; the approximation uses the forward price only.
 static double initial_guess(
-    double price, double spot, double strike, double expiry,
+    double price, double spot, double expiry,
     double rate, double div_yield
 ) noexcept {
     double forward = spot * std::exp((rate - div_yield) * expiry);
@@ -115,7 +116,7 @@ double implied_vol(
     }
 
     // ── Initial guess ───────────────────────────────────────────────────
-    double sigma = detail::initial_guess(price, spot, strike, expiry, rate, div_yield);
+    double sigma = detail::initial_guess(price, spot, expiry, rate, div_yield);
 
     // ── Establish a valid bracket [lo, hi] around the root ──────────────
     // We need price(lo) < target < price(hi) for bisection to work.
@@ -152,7 +153,6 @@ double implied_vol(
     constexpr double TOL = 1e-14;
 
     int stuck_count = 0;
-    double prev_sigma = sigma;
 
     for (int i = 0; i < MAX_ITER; ++i) {
         double model_price = bsm_price(spot, strike, expiry, rate, sigma, div_yield, is_call);
@@ -195,7 +195,6 @@ double implied_vol(
             stuck_count = 0;
         }
 
-        prev_sigma = sigma;
         sigma = new_sigma;
 
         // Bracket has collapsed
