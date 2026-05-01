@@ -163,6 +163,68 @@ class TestEnrich:
         assert enriched["iv"].notna().any()
 
 
+class TestEnrichPerformance:
+    """Lock in vectorized enrich performance (Issue #21)."""
+
+    def test_large_chain_under_budget(self):
+        """Enriching a 1000-row chain should complete in well under 1 second.
+
+        With the vectorized batch path, this typically runs in ~2ms. The 1s
+        budget is intentionally loose to avoid CI flakiness; if this fails,
+        someone has reintroduced a per-row Python loop.
+        """
+        import time
+
+        # Build a 1000-row synthetic chain (50 strikes × 10 expiries × 2 kinds)
+        underlying = 100.0
+        rows = []
+        now = datetime.now(timezone.utc)
+        for d in range(1, 11):
+            expiry_dt = now + timedelta(days=30 * d)
+            expiry_str = expiry_dt.strftime("%Y%m%d")
+            tte = 30 * d / 365.25
+            for k in np.linspace(70, 130, 50):
+                for kind in ("call", "put"):
+                    p = oc.price(
+                        spot=underlying,
+                        strike=k,
+                        expiry=tte,
+                        rate=0.05,
+                        vol=0.20,
+                        kind=kind,
+                    )
+                    rows.append(
+                        {
+                            "symbol": "TEST",
+                            "strike": k,
+                            "expiry": expiry_str,
+                            "kind": kind,
+                            "bid": max(p * 0.95, 0.01),
+                            "ask": p * 1.05,
+                            "last": p,
+                            "volume": 100,
+                            "open_interest": 500,
+                            "underlying_price": underlying,
+                        }
+                    )
+        chain = pd.DataFrame(rows)
+        assert len(chain) == 1000
+
+        # Warm-up
+        _ = oc.enrich(chain.iloc[:10].copy(), rate=0.05)
+
+        t0 = time.perf_counter()
+        enriched = oc.enrich(chain, rate=0.05)
+        elapsed = time.perf_counter() - t0
+
+        assert elapsed < 1.0, (
+            f"enrich() on 1000 rows took {elapsed * 1000:.1f}ms "
+            f"(budget: 1000ms). A per-row Python loop may have been reintroduced."
+        )
+        # Sanity: most rows should solve
+        assert enriched["iv"].notna().sum() > 950
+
+
 class TestFetchChain:
     """Test fetch_chain() dispatch logic (no live IBKR connection)."""
 

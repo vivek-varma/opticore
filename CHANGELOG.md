@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+- **`enrich()` is now ~50× faster** on real-sized chains (#21). Replaced the
+  per-row Python loop with two batched calls into the C++ core
+  (`_implied_vol_batch`, `_greeks_batch`). A 1000-row chain enriches in
+  ~2 ms (was ~100 ms). NaN propagation handles unsolvable rows naturally,
+  removing the bare `except Exception` that was hiding errors (#25).
+
 ### Added
 - **yfinance provider** for `oc.fetch_chain()` — no account, no subscription,
   ~15-min delayed Yahoo data. Use via `provider="yfinance"`. Install with

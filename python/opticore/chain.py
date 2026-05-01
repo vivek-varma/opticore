@@ -138,7 +138,7 @@ def enrich(
     pd.DataFrame
         Original chain with added columns.
     """
-    from opticore import iv as oc_iv
+    from opticore._core import _greeks_batch, _implied_vol_batch
 
     df = chain.copy()
 
@@ -163,70 +163,45 @@ def enrich(
         np.maximum(df["strike"] - df["underlying_price"], 0),
     )
 
-    # ── Implied volatility ───────────────────────────────────────────────
-    prices = df[price_col].values.astype(np.float64)
-    spots = df["underlying_price"].values.astype(np.float64)
-    strikes = df["strike"].values.astype(np.float64)
-    ttes = df["tte"].values.astype(np.float64)
-    is_call_arr = is_call.values
+    # ── Vectorized IV + Greeks ───────────────────────────────────────────
+    # Single trip into C++ for IV solve, then a second for Greeks. NaN
+    # propagation handles unsolvable rows: _implied_vol_batch returns NaN,
+    # _greeks_batch then produces NaN price/greeks for those rows naturally.
+    prices = np.ascontiguousarray(df[price_col].values, dtype=np.float64)
+    spots = np.ascontiguousarray(df["underlying_price"].values, dtype=np.float64)
+    strikes = np.ascontiguousarray(df["strike"].values, dtype=np.float64)
+    ttes = np.ascontiguousarray(df["tte"].values, dtype=np.float64)
+    is_call_arr = np.ascontiguousarray(is_call.values, dtype=bool)
 
-    iv_values = np.empty(len(df), dtype=np.float64)
-    for i in range(len(df)):
-        kind_str = "call" if is_call_arr[i] else "put"
-        try:
-            iv_values[i] = oc_iv(
-                price=prices[i],
-                spot=spots[i],
-                strike=strikes[i],
-                expiry=ttes[i],
-                rate=rate,
-                kind=kind_str,
-                div_yield=div_yield,
-            )
-        except Exception:
-            iv_values[i] = np.nan
-
+    iv_values = np.asarray(
+        _implied_vol_batch(
+            prices,
+            spots,
+            strikes,
+            ttes,
+            float(rate),
+            float(div_yield),
+            is_call_arr,
+        )
+    )
     df["iv"] = iv_values
 
-    # ── Greeks (using solved IV) ─────────────────────────────────────────
-    from opticore._core import _greeks_scalar
+    model_price, delta, gamma, theta, vega, rho = _greeks_batch(
+        spots,
+        strikes,
+        ttes,
+        float(rate),
+        iv_values,
+        float(div_yield),
+        is_call_arr,
+    )
 
-    greek_cols: dict[str, list[float]] = {
-        "delta": [],
-        "gamma": [],
-        "theta": [],
-        "vega": [],
-        "rho": [],
-    }
-    model_price: list[float] = []
-
-    for i in range(len(df)):
-        v = iv_values[i]
-        if np.isnan(v) or v <= 0:
-            model_price.append(np.nan)
-            for col in greek_cols:
-                greek_cols[col].append(np.nan)
-            continue
-
-        result = _greeks_scalar(
-            spots[i],
-            strikes[i],
-            ttes[i],
-            rate,
-            v,
-            div_yield,
-            bool(is_call_arr[i]),
-        )
-        model_price.append(result[0])
-        greek_cols["delta"].append(result[1])
-        greek_cols["gamma"].append(result[2])
-        greek_cols["theta"].append(result[3])
-        greek_cols["vega"].append(result[4])
-        greek_cols["rho"].append(result[5])
-
-    df["model_price"] = model_price
-    for col, values in greek_cols.items():
-        df[col] = values
+    df["model_price"] = np.asarray(model_price)
+    df["delta"] = np.asarray(delta)
+    df["gamma"] = np.asarray(gamma)
+    df["theta"] = np.asarray(theta)
+    df["vega"] = np.asarray(vega)
+    df["rho"] = np.asarray(rho)
 
     # ── Summary ──────────────────────────────────────────────────────────
     n_total = len(df)
