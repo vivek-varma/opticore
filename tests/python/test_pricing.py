@@ -59,19 +59,19 @@ class TestIV:
         """Price → IV → should recover original vol."""
         vol = 0.25
         p = oc.price(spot=100, strike=100, expiry=1.0, rate=0.05, vol=vol, kind="call")
-        solved = oc.iv(price_val=p, spot=100, strike=100, expiry=1.0, rate=0.05, kind="call")
+        solved = oc.iv(price=p, spot=100, strike=100, expiry=1.0, rate=0.05, kind="call")
         assert abs(solved - vol) < 1e-8
 
     def test_round_trip_otm_put(self, oc):
         """Round-trip for OTM put."""
         vol = 0.30
         p = oc.price(spot=100, strike=85, expiry=0.5, rate=0.05, vol=vol, kind="put")
-        solved = oc.iv(price_val=p, spot=100, strike=85, expiry=0.5, rate=0.05, kind="put")
+        solved = oc.iv(price=p, spot=100, strike=85, expiry=0.5, rate=0.05, kind="put")
         assert abs(solved - vol) < 1e-6
 
     def test_negative_price_returns_nan(self, oc):
         """Negative price should return NaN."""
-        result = oc.iv(price_val=-1.0, spot=100, strike=100, expiry=1.0, rate=0.05, kind="call")
+        result = oc.iv(price=-1.0, spot=100, strike=100, expiry=1.0, rate=0.05, kind="call")
         assert np.isnan(result)
 
     def test_vectorized(self, oc):
@@ -84,7 +84,7 @@ class TestIV:
             ]
         )
         solved = oc.iv(
-            price_val=prices,
+            price=prices,
             spot=np.full(5, 100.0),
             strike=np.full(5, 100.0),
             expiry=np.full(5, 1.0),

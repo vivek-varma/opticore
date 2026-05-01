@@ -190,7 +190,7 @@ def price(
 
 
 def iv(
-    price_val: Union[float, np.ndarray],
+    price: Union[float, np.ndarray],
     spot: Union[float, np.ndarray],
     strike: Union[float, np.ndarray],
     expiry: Union[float, np.ndarray],
@@ -204,7 +204,7 @@ def iv(
 
     Parameters
     ----------
-    price_val : float or array
+    price : float or array
         Observed option price(s).
     spot : float or array
         Current underlying price.
@@ -232,9 +232,9 @@ def iv(
     """
     is_call = _parse_kind(kind)
 
-    if _is_scalar(price_val, spot, strike, expiry):
+    if _is_scalar(price, spot, strike, expiry):
         return _implied_vol_scalar(
-            float(price_val),
+            float(price),
             float(spot),
             float(strike),
             float(expiry),
@@ -244,7 +244,7 @@ def iv(
         )
 
     # Vectorized
-    p = np.asarray(price_val, dtype=np.float64).ravel()
+    p = np.asarray(price, dtype=np.float64).ravel()
     s = np.asarray(spot, dtype=np.float64).ravel()
     k = np.asarray(strike, dtype=np.float64).ravel()
     t = np.asarray(expiry, dtype=np.float64).ravel()

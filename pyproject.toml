@@ -33,8 +33,9 @@ dependencies = [
 
 [project.optional-dependencies]
 ibkr = ["ib_async>=2.0", "nest_asyncio>=1.5"]
+data-yfinance = ["yfinance>=0.2"]
 viz = ["matplotlib>=3.7"]
-all = ["opticore[ibkr,viz]"]
+all = ["opticore[ibkr,data-yfinance,viz]"]
 dev = [
     "opticore[all]",
     "pytest>=7.0",

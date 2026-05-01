@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **yfinance provider** for `oc.fetch_chain()` — no account, no subscription,
+  ~15-min delayed Yahoo data. Use via `provider="yfinance"`. Install with
+  `pip install opticore[data-yfinance]`. IBKR remains the primary provider.
+
+### Added
 - Type stubs (`__init__.pyi`, `_core.pyi`) and `py.typed` marker for PEP 561
   compliance. IDEs and `mypy` now see real types for all public functions
   instead of `Any`, including `pd.DataFrame` returns and NumPy array overloads.
@@ -15,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `python/opticore` + `tests/python`.
 
 ### Changed
+- **Breaking (keyword arg):** `oc.iv(price_val=...)` → `oc.iv(price=...)` to
+  match the docstring and notebooks. Positional calls are unaffected.
 - `plot.payoff` param `spot_range` is now `Optional[tuple[float, float]]`
   (was implicitly Optional — PEP 484 no longer allows that).
 - `enrich()`'s internal `greek_cols` dict now has an explicit type annotation.

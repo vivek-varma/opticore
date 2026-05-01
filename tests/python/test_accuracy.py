@@ -542,7 +542,7 @@ class TestIVAccuracy:
     def test_call_iv_round_trip(self, case):
         c = _unpack(case)
         solved = oc.iv(
-            price_val=c["call_price"],
+            price=c["call_price"],
             spot=c["S"],
             strike=c["K"],
             expiry=c["T"],
@@ -563,7 +563,7 @@ class TestIVAccuracy:
     def test_put_iv_round_trip(self, case):
         c = _unpack(case)
         solved = oc.iv(
-            price_val=c["put_price"],
+            price=c["put_price"],
             spot=c["S"],
             strike=c["K"],
             expiry=c["T"],
@@ -649,7 +649,7 @@ class TestVectorizedMatchesScalar:
         )
 
         batch_iv = oc.iv(
-            price_val=prices,
+            price=prices,
             spot=np.full(5, 100.0),
             strike=np.full(5, 100.0),
             expiry=np.full(5, 1.0),
@@ -658,7 +658,7 @@ class TestVectorizedMatchesScalar:
         )
         scalar_iv = np.array(
             [
-                oc.iv(price_val=prices[i], spot=100, strike=100, expiry=1.0, rate=0.05, kind="call")
+                oc.iv(price=prices[i], spot=100, strike=100, expiry=1.0, rate=0.05, kind="call")
                 for i in range(5)
             ]
         )
@@ -700,16 +700,14 @@ class TestNaNPropagation:
 
     def test_nan_input_iv(self):
         """IV of NaN price returns NaN."""
-        result = oc.iv(price_val=np.nan, spot=100, strike=100, expiry=1.0, rate=0.05, kind="call")
+        result = oc.iv(price=np.nan, spot=100, strike=100, expiry=1.0, rate=0.05, kind="call")
         assert np.isnan(result)
 
     def test_zero_time_value_returns_nan_iv(self):
         """Deep ITM with no time value: IV should be NaN."""
         # Deep ITM call: intrinsic ≈ price, no time value
         intrinsic = 100 - 50 * np.exp(-0.05 * 0.25)  # ~ 50.62
-        result = oc.iv(
-            price_val=intrinsic, spot=100, strike=50, expiry=0.25, rate=0.05, kind="call"
-        )
+        result = oc.iv(price=intrinsic, spot=100, strike=50, expiry=0.25, rate=0.05, kind="call")
         assert np.isnan(result)
 
     def test_vectorized_nan_propagation(self):
@@ -719,7 +717,7 @@ class TestNaNPropagation:
         strikes = np.full(3, 100.0)
         expiries = np.full(3, 1.0)
         result = oc.iv(
-            price_val=prices,
+            price=prices,
             spot=spots,
             strike=strikes,
             expiry=expiries,

@@ -51,7 +51,12 @@ def fetch_chain(
     symbol : str
         Underlying ticker symbol (e.g. "AAPL", "SPY").
     provider : str
-        Data provider. Currently only "ibkr" is supported.
+        Data provider. Supported:
+          - ``"ibkr"`` (default): Interactive Brokers via TWS/IB Gateway.
+            Requires an account + market-data subscription.
+          - ``"yfinance"`` (aliases: ``"yahoo"``, ``"yf"``): Yahoo Finance,
+            ~15-min delayed, no account needed. Install via
+            ``pip install opticore[data-yfinance]``.
     host : str
         TWS/Gateway host (default: localhost).
     port : int
@@ -79,7 +84,8 @@ def fetch_chain(
     >>> chain = oc.fetch_chain("AAPL")
     >>> chain.head()
     """
-    if provider.lower() == "ibkr":
+    p = provider.lower()
+    if p == "ibkr":
         from opticore.data.ibkr import fetch_ibkr_chain
 
         return fetch_ibkr_chain(
@@ -92,11 +98,17 @@ def fetch_chain(
             market_data_type=market_data_type,
             timeout=timeout,
         )
-    else:
-        raise ValueError(
-            f"Unknown provider: {provider!r}. Supported: 'ibkr'. "
-            f"More providers coming in a future release."
+    elif p in ("yfinance", "yahoo", "yf"):
+        from opticore.data.yfinance_adapter import fetch_yfinance_chain
+
+        return fetch_yfinance_chain(
+            symbol=symbol,
+            max_expiries=max_expiries,
+            strike_count=strike_count,
+            timeout=timeout,
         )
+    else:
+        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'ibkr', 'yfinance'.")
 
 
 def enrich(
@@ -163,7 +175,7 @@ def enrich(
         kind_str = "call" if is_call_arr[i] else "put"
         try:
             iv_values[i] = oc_iv(
-                price_val=prices[i],
+                price=prices[i],
                 spot=spots[i],
                 strike=strikes[i],
                 expiry=ttes[i],
@@ -180,7 +192,11 @@ def enrich(
     from opticore._core import _greeks_scalar
 
     greek_cols: dict[str, list[float]] = {
-        "delta": [], "gamma": [], "theta": [], "vega": [], "rho": []
+        "delta": [],
+        "gamma": [],
+        "theta": [],
+        "vega": [],
+        "rho": [],
     }
     model_price: list[float] = []
 

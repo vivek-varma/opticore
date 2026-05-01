@@ -65,7 +65,7 @@ def price(
 
 @overload
 def iv(
-    price_val: float,
+    price: float,
     spot: float,
     strike: float,
     expiry: float,
@@ -75,7 +75,7 @@ def iv(
 ) -> float: ...
 @overload
 def iv(
-    price_val: ArrayLike,
+    price: ArrayLike,
     spot: ArrayLike,
     strike: ArrayLike,
     expiry: ArrayLike,
@@ -95,7 +95,6 @@ def greeks(
     kind: str = ...,
     div_yield: float = ...,
 ) -> GreeksResult: ...
-
 def greeks_table(
     spot: Union[float, ArrayLike],
     strike: Union[float, ArrayLike],
@@ -114,7 +113,6 @@ def check_connection(
     client_id: int = ...,
     timeout: float = ...,
 ) -> dict: ...
-
 def fetch_chain(
     symbol: str,
     provider: str = ...,
@@ -126,7 +124,6 @@ def fetch_chain(
     market_data_type: int = ...,
     timeout: float = ...,
 ) -> pd.DataFrame: ...
-
 def enrich(
     chain: pd.DataFrame,
     rate: float = ...,

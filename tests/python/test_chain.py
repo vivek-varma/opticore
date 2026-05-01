@@ -168,7 +168,7 @@ class TestFetchChain:
 
     def test_unknown_provider_raises(self):
         with pytest.raises(ValueError, match="Unknown provider"):
-            oc.fetch_chain("AAPL", provider="yahoo")
+            oc.fetch_chain("AAPL", provider="bogus_provider_xyz")
 
     def test_ibkr_import_error(self, monkeypatch):
         """fetch_chain('ibkr') raises ImportError if ib_async not installed."""

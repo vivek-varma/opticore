@@ -26,7 +26,6 @@ def _bsm_price_scalar(
     div_yield: float = ...,
     is_call: bool = ...,
 ) -> float: ...
-
 def _implied_vol_scalar(
     price: float,
     spot: float,
@@ -36,7 +35,6 @@ def _implied_vol_scalar(
     div_yield: float = ...,
     is_call: bool = ...,
 ) -> float: ...
-
 def _greeks_scalar(
     spot: float,
     strike: float,
@@ -60,7 +58,6 @@ def _bsm_price_batch(
     div_yield: float = ...,
     is_call: bool = ...,
 ) -> NDArray[np.float64]: ...
-
 def _implied_vol_batch(
     price: NDArray[np.float64],
     spot: NDArray[np.float64],
@@ -70,7 +67,6 @@ def _implied_vol_batch(
     div_yield: float = ...,
     is_call: NDArray[np.bool_] = ...,
 ) -> NDArray[np.float64]: ...
-
 def _greeks_batch(
     spot: NDArray[np.float64],
     strike: NDArray[np.float64],
