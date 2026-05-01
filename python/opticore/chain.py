@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def check_connection(
@@ -209,7 +212,7 @@ def enrich(
     n_success = n_total - n_failed
     pct_failed = (n_failed / n_total * 100) if n_total > 0 else 0
 
-    print(f"Enriched {n_success} options, {n_failed} IV failures ({pct_failed:.1f}%)")
+    logger.info("Enriched %d options, %d IV failures (%.1f%%)", n_success, n_failed, pct_failed)
 
     # Clean up temp column
     df.drop(columns=["expiry_dt"], inplace=True, errors="ignore")

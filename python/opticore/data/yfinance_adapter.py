@@ -15,8 +15,12 @@ Limitations
 
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def fetch_yfinance_chain(
@@ -147,7 +151,7 @@ def fetch_yfinance_chain(
             chain = tk.option_chain(exp)
         except Exception as e:
             # Skip an expiry that fails rather than abort the whole fetch
-            print(f"  yfinance: skipping expiry {exp} ({e.__class__.__name__})")
+            logger.warning("yfinance: skipping expiry %s (%s)", exp, e.__class__.__name__)
             continue
 
         for df, kind in ((chain.calls, "call"), (chain.puts, "put")):
@@ -182,7 +186,10 @@ def fetch_yfinance_chain(
     fallback = (out["mid"] <= 0) & (out["last"] > 0)
     out.loc[fallback, "mid"] = out.loc[fallback, "last"]
 
-    print(
-        f"Fetched {len(out)} option contracts for {symbol} ({len(expiries)} expiries) from yfinance"
+    logger.info(
+        "Fetched %d option contracts for %s (%d expiries) from yfinance",
+        len(out),
+        symbol,
+        len(expiries),
     )
     return out

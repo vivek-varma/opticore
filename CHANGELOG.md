@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Library code no longer prints to stdout** (#23). All status/progress
+  messages from `enrich()`, `fetch_ibkr_chain()`, and `fetch_yfinance_chain()`
+  now route through the standard `logging` module under the `opticore.*`
+  namespace. To see them, opt in once: `logging.basicConfig(level=logging.INFO)`.
+  Notebooks/scripts that relied on the old prints will go silent — this is
+  intentional; libraries shouldn't pollute stdout.
+
 ### Performance
 - **`enrich()` is now ~50× faster** on real-sized chains (#21). Replaced the
   per-row Python loop with two batched calls into the C++ core

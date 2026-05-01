@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 import numpy as np
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def _patch_event_loop():
@@ -308,9 +311,12 @@ def fetch_ibkr_chain(
             mask = (df["mid"] <= 0) & (df["last"] > 0)
             df.loc[mask, "mid"] = df.loc[mask, "last"]
 
-        print(
-            f"Fetched {len(df)} option contracts for {symbol} "
-            f"({len(expirations)} expiries, {len(strikes)} strikes)"
+        logger.info(
+            "Fetched %d option contracts for %s (%d expiries, %d strikes)",
+            len(df),
+            symbol,
+            len(expirations),
+            len(strikes),
         )
 
         return df
