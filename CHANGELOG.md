@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Breaking — `oc.plot.*` now returns `(fig, ax)`** (#27). All three plot
+  helpers (`smile`, `payoff`, `greek`) now return a `(Figure, Axes)` tuple
+  per matplotlib convention, instead of just `Figure`. This unlocks
+  composition (annotations, shared axes, subplots) without reaching into
+  `fig.axes`. Migrate `fig = oc.plot.smile(...)` → `fig, ax = oc.plot.smile(...)`.
+  Bare calls like `oc.plot.smile(df)` are unaffected (return value discarded).
 - **Breaking — `fetch_chain()` signature** (#22). Provider-specific kwargs
   (`host`, `port`, `client_id`, `market_data_type`) are no longer top-level
   parameters; they now flow through `**provider_kwargs`. Old call sites

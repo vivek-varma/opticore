@@ -35,31 +35,30 @@ def enriched_df():
 class TestSmile:
     """Test oc.plot.smile()."""
 
-    def test_returns_figure(self, enriched_df):
-        fig = oc_plot.smile(enriched_df)
-        assert fig is not None
+    def test_returns_fig_ax_tuple(self, enriched_df):
+        import matplotlib.axes
         import matplotlib.figure
 
+        fig, ax = oc_plot.smile(enriched_df)
         assert isinstance(fig, matplotlib.figure.Figure)
+        assert isinstance(ax, matplotlib.axes.Axes)
 
     def test_single_expiry(self, enriched_df):
-        fig = oc_plot.smile(enriched_df, expiry="20260501")
-        axes = fig.get_axes()
-        assert len(axes) == 1
+        fig, ax = oc_plot.smile(enriched_df, expiry="20260501")
         # Should have one line (one expiry)
-        assert len(axes[0].get_lines()) == 1
+        assert len(ax.get_lines()) == 1
 
     def test_moneyness_x(self, enriched_df):
-        fig = oc_plot.smile(enriched_df, x="moneyness")
-        ax = fig.get_axes()[0]
+        fig, ax = oc_plot.smile(enriched_df, x="moneyness")
         assert "moneyness" in ax.get_xlabel().lower()
 
     def test_custom_ax(self, enriched_df):
         import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots()
-        result = oc_plot.smile(enriched_df, ax=ax)
-        assert result is fig
+        out_fig, out_ax = oc_plot.smile(enriched_df, ax=ax)
+        assert out_fig is fig
+        assert out_ax is ax
 
     def test_empty_after_filter_raises(self):
         df = pd.DataFrame(
@@ -78,20 +77,20 @@ class TestPayoff:
     """Test oc.plot.payoff()."""
 
     def test_long_call(self):
-        legs = [oc.Leg("call", strike=100, qty=1, premium=5.0)]
-        fig = oc_plot.payoff(legs)
-        assert fig is not None
+        import matplotlib.axes
         import matplotlib.figure
 
+        legs = [oc.Leg("call", strike=100, qty=1, premium=5.0)]
+        fig, ax = oc_plot.payoff(legs)
         assert isinstance(fig, matplotlib.figure.Figure)
+        assert isinstance(ax, matplotlib.axes.Axes)
 
     def test_straddle(self):
         legs = [
             oc.Leg("call", strike=100, qty=1, premium=5.0),
             oc.Leg("put", strike=100, qty=1, premium=4.0),
         ]
-        fig = oc_plot.payoff(legs)
-        ax = fig.get_axes()[0]
+        fig, ax = oc_plot.payoff(legs)
         line = ax.get_lines()[0]
         x, y = line.get_xdata(), line.get_ydata()
         # Straddle has max loss at strike = -(5+4) = -9
@@ -100,8 +99,7 @@ class TestPayoff:
 
     def test_custom_spot_range(self):
         legs = [oc.Leg("call", strike=100, qty=1, premium=5.0)]
-        fig = oc_plot.payoff(legs, spot_range=(50, 150))
-        ax = fig.get_axes()[0]
+        fig, ax = oc_plot.payoff(legs, spot_range=(50, 150))
         line = ax.get_lines()[0]
         x = line.get_xdata()
         assert x[0] >= 50
@@ -113,8 +111,7 @@ class TestPayoff:
 
     def test_short_put(self):
         legs = [oc.Leg("put", strike=100, qty=-1, premium=4.0)]
-        fig = oc_plot.payoff(legs)
-        ax = fig.get_axes()[0]
+        fig, ax = oc_plot.payoff(legs)
         line = ax.get_lines()[0]
         x, y = line.get_xdata(), line.get_ydata()
         # Short put: max profit = premium at high spot
@@ -128,15 +125,18 @@ class TestPayoff:
             oc.Leg("call", strike=105, qty=-1, premium=2.5),
             oc.Leg("call", strike=110, qty=1, premium=1.0),
         ]
-        fig = oc_plot.payoff(legs)
-        assert fig is not None
+        fig, ax = oc_plot.payoff(legs)
+        assert fig is not None and ax is not None
 
 
 class TestGreek:
     """Test oc.plot.greek()."""
 
     def test_delta_call(self):
-        fig = oc_plot.greek(
+        import matplotlib.axes
+        import matplotlib.figure
+
+        fig, ax = oc_plot.greek(
             "delta",
             spot_range=(80, 120),
             strike=100,
@@ -145,13 +145,11 @@ class TestGreek:
             vol=0.2,
             kind="call",
         )
-        assert fig is not None
-        import matplotlib.figure
-
         assert isinstance(fig, matplotlib.figure.Figure)
+        assert isinstance(ax, matplotlib.axes.Axes)
 
     def test_both_kinds(self):
-        fig = oc_plot.greek(
+        fig, ax = oc_plot.greek(
             "delta",
             spot_range=(80, 120),
             strike=100,
@@ -160,14 +158,13 @@ class TestGreek:
             vol=0.2,
             kind="both",
         )
-        ax = fig.get_axes()[0]
         # "both" should produce 2 lines (call + put) + 1 vertical strike line
         lines = ax.get_lines()
         assert len(lines) >= 2
 
     def test_all_greeks(self):
         for gname in ("price", "delta", "gamma", "theta", "vega", "rho"):
-            fig = oc_plot.greek(
+            fig, ax = oc_plot.greek(
                 gname,
                 spot_range=(80, 120),
                 strike=100,
@@ -175,7 +172,7 @@ class TestGreek:
                 rate=0.05,
                 vol=0.2,
             )
-            assert fig is not None
+            assert fig is not None and ax is not None
 
     def test_invalid_greek_raises(self):
         with pytest.raises(ValueError, match="greek must be one of"):
@@ -192,7 +189,7 @@ class TestGreek:
         import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots()
-        result = oc_plot.greek(
+        out_fig, out_ax = oc_plot.greek(
             "gamma",
             spot_range=(80, 120),
             strike=100,
@@ -201,4 +198,5 @@ class TestGreek:
             vol=0.2,
             ax=ax,
         )
-        assert result is fig
+        assert out_fig is fig
+        assert out_ax is ax

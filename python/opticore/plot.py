@@ -44,7 +44,9 @@ def smile(
 
     Returns
     -------
-    matplotlib.figure.Figure
+    (fig, ax) : tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+        Standard matplotlib convention. Use ``ax`` to add annotations,
+        ``fig`` to save / display.
     """
     plt = _get_plt()
     import pandas as pd
@@ -83,7 +85,7 @@ def smile(
     ax.grid(True, alpha=0.3)
 
     fig.tight_layout()
-    return fig
+    return fig, ax
 
 
 def payoff(
@@ -106,12 +108,13 @@ def payoff(
 
     Returns
     -------
-    matplotlib.figure.Figure
+    (fig, ax) : tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+        Standard matplotlib convention.
 
     Examples
     --------
     >>> import opticore as oc
-    >>> fig = oc.plot.payoff([
+    >>> fig, ax = oc.plot.payoff([
     ...     oc.Leg("call", strike=105, qty=1, premium=3.50),
     ...     oc.Leg("put",  strike=95,  qty=1, premium=2.10),
     ... ])
@@ -179,7 +182,7 @@ def payoff(
     ax.grid(True, alpha=0.3)
 
     fig.tight_layout()
-    return fig
+    return fig, ax
 
 
 def greek(
@@ -211,7 +214,8 @@ def greek(
 
     Returns
     -------
-    matplotlib.figure.Figure
+    (fig, ax) : tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+        Standard matplotlib convention.
     """
     plt = _get_plt()
 
@@ -247,4 +251,4 @@ def greek(
     ax.grid(True, alpha=0.3)
 
     fig.tight_layout()
-    return fig
+    return fig, ax
