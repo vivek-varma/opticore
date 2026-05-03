@@ -232,6 +232,40 @@ class TestFetchChain:
         with pytest.raises(ValueError, match="Unknown provider"):
             oc.fetch_chain("AAPL", provider="bogus_provider_xyz")
 
+    def test_yfinance_rejects_provider_kwargs(self):
+        """yfinance accepts no extra kwargs — host/port/client_id are nonsense for it."""
+        with pytest.raises(TypeError, match="yfinance provider takes no provider_kwargs"):
+            oc.fetch_chain("AAPL", provider="yfinance", port=7497)
+
+    def test_ibkr_provider_kwargs_forwarded(self, monkeypatch):
+        """fetch_chain forwards provider_kwargs to fetch_ibkr_chain unchanged."""
+        captured = {}
+
+        def fake_fetch(**kwargs):
+            captured.update(kwargs)
+            return pd.DataFrame()
+
+        import opticore.data.ibkr as ibkr_mod
+
+        monkeypatch.setattr(ibkr_mod, "fetch_ibkr_chain", fake_fetch)
+        oc.fetch_chain(
+            "AAPL",
+            provider="ibkr",
+            max_expiries=4,
+            strike_count=10,
+            host="10.0.0.1",
+            port=4001,
+            client_id=42,
+            market_data_type=4,
+        )
+        assert captured["symbol"] == "AAPL"
+        assert captured["max_expiries"] == 4
+        assert captured["strike_count"] == 10
+        assert captured["host"] == "10.0.0.1"
+        assert captured["port"] == 4001
+        assert captured["client_id"] == 42
+        assert captured["market_data_type"] == 4
+
     def test_ibkr_import_error(self, monkeypatch):
         """fetch_chain('ibkr') raises ImportError if ib_async not installed."""
         import builtins

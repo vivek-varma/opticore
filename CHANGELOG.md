@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Breaking — `fetch_chain()` signature** (#22). Provider-specific kwargs
+  (`host`, `port`, `client_id`, `market_data_type`) are no longer top-level
+  parameters; they now flow through `**provider_kwargs`. Old call sites
+  using kwargs (e.g. `oc.fetch_chain("AAPL", port=4001, client_id=42)`)
+  continue to work unchanged because the kwargs are forwarded to the IBKR
+  adapter. Positional calls passing those args are no longer supported,
+  but no documentation ever advertised that pattern. The yfinance provider
+  now raises `TypeError` if any provider_kwargs are passed (they would be
+  silently ignored before).
 - **Library code no longer prints to stdout** (#23). All status/progress
   messages from `enrich()`, `fetch_ibkr_chain()`, and `fetch_yfinance_chain()`
   now route through the standard `logging` module under the `opticore.*`

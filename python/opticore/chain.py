@@ -39,13 +39,10 @@ def check_connection(
 def fetch_chain(
     symbol: str,
     provider: str = "ibkr",
-    host: str = "127.0.0.1",
-    port: int = 7497,
-    client_id: int = 1,
     max_expiries: int = 6,
     strike_count: int = 20,
-    market_data_type: int = 3,
     timeout: float = 30.0,
+    **provider_kwargs,
 ) -> pd.DataFrame:
     """Fetch an option chain for a given symbol.
 
@@ -60,56 +57,62 @@ def fetch_chain(
           - ``"yfinance"`` (aliases: ``"yahoo"``, ``"yf"``): Yahoo Finance,
             ~15-min delayed, no account needed. Install via
             ``pip install opticore[data-yfinance]``.
-    host : str
-        TWS/Gateway host (default: localhost).
-    port : int
-        TWS port (7497) or Gateway port (4001).
-    client_id : int
-        Unique client ID for the IBKR connection.
     max_expiries : int
-        Number of nearest expiries to fetch (default: 6).
+        Number of nearest expiries to fetch (default: 6). Shared contract
+        across all providers.
     strike_count : int
-        Number of strikes around ATM on each side (default: 20).
-    market_data_type : int
-        1=live (paid), 3=delayed (free), 4=delayed-frozen.
+        Number of strikes around ATM on each side (default: 20). Shared
+        contract across all providers.
     timeout : float
-        Maximum seconds to wait for data.
+        Maximum seconds to wait for data (default: 30). Shared contract
+        across all providers.
+    **provider_kwargs
+        Provider-specific options. Unknown kwargs are forwarded as-is
+        to the underlying provider adapter.
+
+        ``ibkr`` accepts:
+            - ``host`` (str, default ``"127.0.0.1"``)
+            - ``port`` (int, default ``7497`` — TWS live; use ``4001`` for Gateway)
+            - ``client_id`` (int, default ``1``)
+            - ``market_data_type`` (int, default ``3`` — 1=live, 3=delayed, 4=frozen)
+
+        ``yfinance`` accepts no extra kwargs.
 
     Returns
     -------
     pd.DataFrame
         Option chain with columns: symbol, strike, expiry, kind,
-        bid, ask, last, volume, open_interest, underlying_price.
+        bid, ask, last, volume, open_interest, underlying_price, mid.
 
     Examples
     --------
     >>> import opticore as oc
-    >>> chain = oc.fetch_chain("AAPL")
-    >>> chain.head()
+    >>> # Default IBKR (uses defaults for host/port/client_id/market_data_type)
+    >>> chain = oc.fetch_chain("AAPL")  # doctest: +SKIP
+    >>> # IBKR with explicit Gateway port
+    >>> chain = oc.fetch_chain("AAPL", port=4001, client_id=42)  # doctest: +SKIP
+    >>> # yfinance (no account)
+    >>> chain = oc.fetch_chain("AAPL", provider="yfinance")  # doctest: +SKIP
     """
     p = provider.lower()
+    shared = dict(
+        symbol=symbol,
+        max_expiries=max_expiries,
+        strike_count=strike_count,
+        timeout=timeout,
+    )
     if p == "ibkr":
         from opticore.data.ibkr import fetch_ibkr_chain
 
-        return fetch_ibkr_chain(
-            symbol=symbol,
-            host=host,
-            port=port,
-            client_id=client_id,
-            max_expiries=max_expiries,
-            strike_count=strike_count,
-            market_data_type=market_data_type,
-            timeout=timeout,
-        )
+        return fetch_ibkr_chain(**shared, **provider_kwargs)
     elif p in ("yfinance", "yahoo", "yf"):
+        if provider_kwargs:
+            raise TypeError(
+                f"yfinance provider takes no provider_kwargs, got: {sorted(provider_kwargs)}"
+            )
         from opticore.data.yfinance_adapter import fetch_yfinance_chain
 
-        return fetch_yfinance_chain(
-            symbol=symbol,
-            max_expiries=max_expiries,
-            strike_count=strike_count,
-            timeout=timeout,
-        )
+        return fetch_yfinance_chain(**shared)
     else:
         raise ValueError(f"Unknown provider: {provider!r}. Supported: 'ibkr', 'yfinance'.")
 

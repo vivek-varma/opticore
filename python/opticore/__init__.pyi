@@ -12,7 +12,7 @@ stub (rather than relying on inline hints alone) for two reasons:
 
 from __future__ import annotations
 
-from typing import NamedTuple, Union, overload
+from typing import Any, NamedTuple, Union, overload
 
 import numpy as np
 import pandas as pd
@@ -116,13 +116,10 @@ def check_connection(
 def fetch_chain(
     symbol: str,
     provider: str = ...,
-    host: str = ...,
-    port: int = ...,
-    client_id: int = ...,
     max_expiries: int = ...,
     strike_count: int = ...,
-    market_data_type: int = ...,
     timeout: float = ...,
+    **provider_kwargs: Any,
 ) -> pd.DataFrame: ...
 def enrich(
     chain: pd.DataFrame,
