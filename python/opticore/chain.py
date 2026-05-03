@@ -173,11 +173,17 @@ def enrich(
     # Single trip into C++ for IV solve, then a second for Greeks. NaN
     # propagation handles unsolvable rows: _implied_vol_batch returns NaN,
     # _greeks_batch then produces NaN price/greeks for those rows naturally.
-    prices = np.ascontiguousarray(df[price_col].values, dtype=np.float64)
-    spots = np.ascontiguousarray(df["underlying_price"].values, dtype=np.float64)
-    strikes = np.ascontiguousarray(df["strike"].values, dtype=np.float64)
-    ttes = np.ascontiguousarray(df["tte"].values, dtype=np.float64)
-    is_call_arr = np.ascontiguousarray(is_call.values, dtype=bool)
+    #
+    # Use Series.to_numpy() (not .values) — it's the stable pandas API and
+    # always returns a numpy.ndarray. In pandas 3.0+, .values can return an
+    # ExtensionArray which nanobind's strict ndarray check rejects.
+    # ascontiguousarray then guarantees C-contiguous layout (required by the
+    # C++ binding's `nb::c_contig` constraint).
+    prices = np.ascontiguousarray(df[price_col].to_numpy(dtype=np.float64, copy=False))
+    spots = np.ascontiguousarray(df["underlying_price"].to_numpy(dtype=np.float64, copy=False))
+    strikes = np.ascontiguousarray(df["strike"].to_numpy(dtype=np.float64, copy=False))
+    ttes = np.ascontiguousarray(df["tte"].to_numpy(dtype=np.float64, copy=False))
+    is_call_arr = np.ascontiguousarray(is_call.to_numpy(dtype=bool, copy=False))
 
     iv_values = np.asarray(
         _implied_vol_batch(

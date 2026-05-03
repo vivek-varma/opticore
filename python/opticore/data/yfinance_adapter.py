@@ -109,9 +109,9 @@ def fetch_yfinance_chain(
     # ── Walk expiries, build rows ────────────────────────────────────────
     rows: list[dict] = []
 
-    def _normalize_expiry(s: str) -> str:
-        """yfinance gives 'YYYY-MM-DD', IBKR gives 'YYYYMMDD'. Match IBKR."""
-        return s.replace("-", "")
+    def _normalize_expiry(s: str) -> pd.Timestamp:
+        """yfinance gives 'YYYY-MM-DD'. Return UTC midnight Timestamp."""
+        return pd.Timestamp(s, tz="UTC")
 
     def _safe_int(v: object) -> int:
         """Coerce a possibly-NaN/None field to a non-negative int."""
