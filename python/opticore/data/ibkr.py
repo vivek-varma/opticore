@@ -291,7 +291,11 @@ def fetch_ibkr_chain(
                 {
                     "symbol": symbol,
                     "strike": float(c.strike),
-                    "expiry": c.lastTradeDateOrContractMonth,
+                    # IBKR returns "YYYYMMDD" string; normalize to UTC Timestamp
+                    # for cross-provider parity (see #24).
+                    "expiry": pd.Timestamp(
+                        c.lastTradeDateOrContractMonth, tz="UTC"
+                    ),
                     "kind": "call" if c.right == "C" else "put",
                     "bid": bid,
                     "ask": ask,

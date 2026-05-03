@@ -16,13 +16,16 @@ def enriched_df():
     """Synthetic enriched DataFrame for smile tests."""
     strikes = np.arange(85.0, 116.0)
     rows = []
-    for exp_str in ["20260501", "20260601"]:
+    for exp in [
+        pd.Timestamp("2026-05-01", tz="UTC"),
+        pd.Timestamp("2026-06-01", tz="UTC"),
+    ]:
         for k in strikes:
             iv = 0.20 + 0.002 * (k - 100) ** 2 / 100  # synthetic smile
             rows.append(
                 {
                     "strike": k,
-                    "expiry": exp_str,
+                    "expiry": exp,
                     "kind": "call",
                     "iv": iv,
                     "moneyness": k / 100.0,
@@ -44,7 +47,7 @@ class TestSmile:
         assert isinstance(ax, matplotlib.axes.Axes)
 
     def test_single_expiry(self, enriched_df):
-        fig, ax = oc_plot.smile(enriched_df, expiry="20260501")
+        fig, ax = oc_plot.smile(enriched_df, expiry="2026-05-01")
         # Should have one line (one expiry)
         assert len(ax.get_lines()) == 1
 

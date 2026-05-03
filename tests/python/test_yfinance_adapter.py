@@ -99,9 +99,9 @@ def test_fetch_yfinance_returns_expected_schema():
     assert set(df.columns) == expected
     assert (df["symbol"] == "AAPL").all()
     assert set(df["kind"].unique()) <= {"call", "put"}
-    # Expiry normalized to YYYYMMDD (matches IBKR adapter)
-    assert (df["expiry"].str.len() == 8).all()
-    assert df["expiry"].iloc[0] == "20260501"
+    # Expiry is a UTC-midnight pd.Timestamp (matches IBKR adapter, see #24)
+    assert pd.api.types.is_datetime64_any_dtype(df["expiry"])
+    assert df["expiry"].iloc[0] == pd.Timestamp("2026-05-01", tz="UTC")
     # Mid computed from bid/ask
     np.testing.assert_allclose(
         df.loc[df["strike"] == 100.0, "mid"].iloc[0],

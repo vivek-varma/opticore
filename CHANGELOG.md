@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Breaking — `expiry` column is now `pd.Timestamp` (UTC midnight)** (#24).
+  Both `fetch_chain` providers (`ibkr`, `yfinance`) now emit `expiry` as a
+  timezone-aware `pd.Timestamp` instead of a `"YYYYMMDD"` string. This makes
+  date arithmetic and filtering natural (`df[df.expiry >= "2026-06-01"]`)
+  and matches what `enrich()` was already producing internally. `enrich()`
+  still accepts legacy string expiries via `pd.to_datetime`, so user-built
+  chains aren't broken. `oc.plot.smile(expiry=...)` accepts strings or
+  Timestamps and normalizes both sides for comparison.
 - **Breaking — `oc.plot.*` now returns `(fig, ax)`** (#27). All three plot
   helpers (`smile`, `payoff`, `greek`) now return a `(Figure, Axes)` tuple
   per matplotlib convention, instead of just `Figure`. This unlocks

@@ -35,8 +35,9 @@ def smile(
     enriched_df : pd.DataFrame
         DataFrame with 'strike', 'expiry', 'iv', 'kind' columns
         (output of oc.enrich()).
-    expiry : str or None
-        Specific expiry date to plot (e.g. '2026-06-20'). If None, plots all.
+    expiry : str, pd.Timestamp, or None
+        Specific expiry date to plot (e.g. '2026-06-20' or a Timestamp).
+        If None, plots all.
     x : str
         X-axis variable: 'strike' or 'moneyness'.
     ax : matplotlib.axes.Axes or None
@@ -60,7 +61,11 @@ def smile(
     df = df[df["kind"].str.lower().isin(["call", "c"])]
 
     if expiry is not None:
-        df = df[df["expiry"].astype(str).str.startswith(str(expiry))]
+        # Normalize both sides to UTC-midnight Timestamps so str/Timestamp
+        # inputs match either schema (legacy "YYYYMMDD" strings or Timestamps).
+        target = pd.to_datetime(expiry, utc=True).normalize()
+        exp_norm = pd.to_datetime(df["expiry"], utc=True).dt.normalize()
+        df = df[exp_norm == target]
 
     if df.empty:
         raise ValueError("No data to plot after filtering.")

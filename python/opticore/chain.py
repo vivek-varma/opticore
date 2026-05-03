@@ -153,9 +153,11 @@ def enrich(
         df["mid"] = (df["bid"] + df["ask"]) / 2.0
 
     # ── Time to expiry in years ──────────────────────────────────────────
+    # Accept either pd.Timestamp (current schema) or legacy "YYYYMMDD" /
+    # "YYYY-MM-DD" strings (pandas can parse both via to_datetime).
     now = datetime.now(timezone.utc)
-    df["expiry_dt"] = pd.to_datetime(df["expiry"], utc=True)
-    df["tte"] = (df["expiry_dt"] - now).dt.total_seconds() / (365.25 * 24 * 3600)
+    expiry_dt = pd.to_datetime(df["expiry"], utc=True)
+    df["tte"] = (expiry_dt - now).dt.total_seconds() / (365.25 * 24 * 3600)
     df["tte"] = df["tte"].clip(lower=1e-6)  # avoid zero/negative
 
     # ── Moneyness ────────────────────────────────────────────────────────
@@ -222,8 +224,5 @@ def enrich(
     pct_failed = (n_failed / n_total * 100) if n_total > 0 else 0
 
     logger.info("Enriched %d options, %d IV failures (%.1f%%)", n_success, n_failed, pct_failed)
-
-    # Clean up temp column
-    df.drop(columns=["expiry_dt"], inplace=True, errors="ignore")
 
     return df
