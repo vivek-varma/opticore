@@ -56,9 +56,7 @@ def main() -> Path:
         exp_dt = AS_OF + timedelta(days=d)
         # Normalize expiry to UTC midnight (matches IBKR/yfinance schema)
         exp_ts = pd.Timestamp(exp_dt.date(), tz="UTC")
-        tte = (exp_ts.to_pydatetime() - AS_OF).total_seconds() / (
-            365.25 * 24 * 3600
-        )
+        tte = (exp_ts.to_pydatetime() - AS_OF).total_seconds() / (365.25 * 24 * 3600)
 
         # ATM ± ~10% in $5 strikes
         strikes = np.arange(SPOT * 0.85, SPOT * 1.15 + 1, 5.0)

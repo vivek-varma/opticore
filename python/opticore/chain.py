@@ -263,9 +263,7 @@ def _pivot_call_put(chain: pd.DataFrame, price_col: str) -> pd.DataFrame:
     call_mid, put_mid (only rows where BOTH call and put exist).
     """
     df = chain.copy()
-    if price_col == "mid" and "mid" not in df.columns and {"bid", "ask"}.issubset(
-        df.columns
-    ):
+    if price_col == "mid" and "mid" not in df.columns and {"bid", "ask"}.issubset(df.columns):
         df["mid"] = (df["bid"] + df["ask"]) / 2.0
     if price_col not in df.columns:
         raise KeyError(f"Chain has no {price_col!r} column.")
@@ -281,8 +279,8 @@ def _pivot_call_put(chain: pd.DataFrame, price_col: str) -> pd.DataFrame:
             ]
         )
 
-    df["_kind"] = df["kind"].str.lower().map(
-        {"call": "call", "c": "call", "put": "put", "p": "put"}
+    df["_kind"] = (
+        df["kind"].str.lower().map({"call": "call", "c": "call", "put": "put", "p": "put"})
     )
     keep = ["expiry", "strike", "underlying_price", "_kind", price_col]
     sub = df[keep].dropna(subset=[price_col])
@@ -307,9 +305,7 @@ def _pivot_call_put(chain: pd.DataFrame, price_col: str) -> pd.DataFrame:
     ).reset_index()
 
     # Bring underlying_price back (first observed per expiry)
-    spot_per_expiry = (
-        sub.groupby("expiry")["underlying_price"].first().rename("underlying_price")
-    )
+    spot_per_expiry = sub.groupby("expiry")["underlying_price"].first().rename("underlying_price")
     pivot = pivot.merge(spot_per_expiry, on="expiry", how="left")
 
     pivot = pivot.dropna(subset=["call", "put"])
@@ -381,9 +377,7 @@ def parity_check(
     S = p["underlying_price"].to_numpy(dtype=np.float64)
     K = p["strike"].to_numpy(dtype=np.float64)
     expected = S * np.exp(-div_yield * tte) - K * np.exp(-rate * tte)
-    actual = p["call_mid"].to_numpy(dtype=np.float64) - p["put_mid"].to_numpy(
-        dtype=np.float64
-    )
+    actual = p["call_mid"].to_numpy(dtype=np.float64) - p["put_mid"].to_numpy(dtype=np.float64)
     residual = actual - expected
 
     out = p[["expiry", "strike", "call_mid", "put_mid"]].copy()
@@ -444,13 +438,9 @@ def implied_forward(
 
     now = datetime.now(timezone.utc)
     expiry_dt = pd.to_datetime(p["expiry"], utc=True)
-    p = p.assign(
-        _tte=(expiry_dt - now).dt.total_seconds() / (365.25 * 24 * 3600)
-    )
+    p = p.assign(_tte=(expiry_dt - now).dt.total_seconds() / (365.25 * 24 * 3600))
     # F per row from parity; average the k nearest spot per expiry.
-    p["_F_row"] = p["strike"] + np.exp(rate * p["_tte"]) * (
-        p["call_mid"] - p["put_mid"]
-    )
+    p["_F_row"] = p["strike"] + np.exp(rate * p["_tte"]) * (p["call_mid"] - p["put_mid"])
     p["_dist"] = (p["strike"] - p["underlying_price"]).abs()
 
     rows = []

@@ -50,9 +50,7 @@ class TestSampleProvider:
         assert df["expiry"].nunique() == 2
 
     def test_strike_count_filter(self):
-        narrow = oc.fetch_chain(
-            provider="sample", symbol="SPY", strike_count=2, max_expiries=1
-        )
+        narrow = oc.fetch_chain(provider="sample", symbol="SPY", strike_count=2, max_expiries=1)
         # 2 strikes per side + ATM = at most 5 unique strikes
         assert narrow["strike"].nunique() <= 5
 

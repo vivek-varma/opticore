@@ -107,9 +107,7 @@ class TestParityCheck:
         assert not diag.empty
 
     def test_empty_chain_returns_empty_frame(self):
-        empty = pd.DataFrame(
-            columns=["expiry", "strike", "kind", "underlying_price", "mid"]
-        )
+        empty = pd.DataFrame(columns=["expiry", "strike", "kind", "underlying_price", "mid"])
         diag = oc.parity_check(empty)
         assert diag.empty
         assert "parity_residual" in diag.columns
@@ -180,9 +178,7 @@ class TestImpliedForward:
         assert (out["n_strikes_used"] <= 5).all()
 
     def test_empty_chain_returns_empty_frame(self):
-        empty = pd.DataFrame(
-            columns=["expiry", "strike", "kind", "underlying_price", "mid"]
-        )
+        empty = pd.DataFrame(columns=["expiry", "strike", "kind", "underlying_price", "mid"])
         out = oc.implied_forward(empty)
         assert out.empty
         assert "forward" in out.columns
