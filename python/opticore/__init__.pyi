@@ -126,6 +126,7 @@ def enrich(
     rate: float = ...,
     div_yield: float = ...,
     price_col: str = ...,
+    include_theo: bool = ...,
 ) -> pd.DataFrame: ...
 def parity_check(
     chain: pd.DataFrame,

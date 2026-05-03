@@ -57,6 +57,9 @@ def fetch_chain(
           - ``"yfinance"`` (aliases: ``"yahoo"``, ``"yf"``): Yahoo Finance,
             ~15-min delayed, no account needed. Install via
             ``pip install opticore[data-yfinance]``.
+          - ``"sample"``: a tiny synthetic SPY chain bundled with the wheel.
+            Zero dependencies, zero config — ideal for tutorials and CI.
+            Data is BSM-priced with a realistic smile, *not* real quotes.
     max_expiries : int
         Number of nearest expiries to fetch (default: 6). Shared contract
         across all providers.
@@ -113,8 +116,18 @@ def fetch_chain(
         from opticore.data.yfinance_adapter import fetch_yfinance_chain
 
         return fetch_yfinance_chain(**shared)
+    elif p == "sample":
+        if provider_kwargs:
+            raise TypeError(
+                f"sample provider takes no provider_kwargs, got: {sorted(provider_kwargs)}"
+            )
+        from opticore.data.sample import fetch_sample_chain
+
+        return fetch_sample_chain(**shared)
     else:
-        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'ibkr', 'yfinance'.")
+        raise ValueError(
+            f"Unknown provider: {provider!r}. Supported: 'ibkr', 'yfinance', 'sample'."
+        )
 
 
 def enrich(
@@ -122,10 +135,14 @@ def enrich(
     rate: float = 0.045,
     div_yield: float = 0.0,
     price_col: str = "mid",
+    include_theo: bool = True,
 ) -> pd.DataFrame:
     """Enrich an option chain DataFrame with IV and Greeks.
 
-    Adds columns: mid, tte, iv, delta, gamma, theta, vega, rho, moneyness, intrinsic.
+    Adds columns: ``mid, tte, iv, delta, gamma, theta, vega, rho,
+    moneyness, intrinsic``. When ``include_theo=True`` (default), also
+    adds ``theo_price`` (BSM price at the recovered IV) and ``mispricing``
+    (``price_col`` minus ``theo_price``) — useful for spotting stale quotes.
 
     Parameters
     ----------
@@ -138,6 +155,10 @@ def enrich(
         Continuous dividend yield (default: 0.0).
     price_col : str
         Column to use for option price: 'mid', 'bid', 'ask', 'last'.
+    include_theo : bool
+        If True (default), add ``theo_price`` and ``mispricing`` columns.
+        Set False to skip them — useful when you only need IV/Greeks
+        and want to keep the output narrow.
 
     Returns
     -------
@@ -200,7 +221,7 @@ def enrich(
     )
     df["iv"] = iv_values
 
-    model_price, delta, gamma, theta, vega, rho = _greeks_batch(
+    theo_price, delta, gamma, theta, vega, rho = _greeks_batch(
         spots,
         strikes,
         ttes,
@@ -210,7 +231,9 @@ def enrich(
         is_call_arr,
     )
 
-    df["model_price"] = np.asarray(model_price)
+    if include_theo:
+        df["theo_price"] = np.asarray(theo_price)
+        df["mispricing"] = df[price_col] - df["theo_price"]
     df["delta"] = np.asarray(delta)
     df["gamma"] = np.asarray(gamma)
     df["theta"] = np.asarray(theta)

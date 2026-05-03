@@ -53,6 +53,26 @@ prices = oc.price(spot=100, strike=strikes, expiry=0.5, rate=0.05, vol=0.20, kin
 # => array of 21 prices, computed in < 0.01 ms
 ```
 
+## Quick start without IBKR
+
+No account, no API keys, no network — a tiny synthetic SPY chain ships
+inside the wheel. Perfect for trying things out:
+
+```python
+chain = oc.fetch_chain(provider="sample", symbol="SPY")
+enriched = oc.enrich(chain, rate=0.045, div_yield=0.013)
+oc.plot.smile(enriched)
+```
+
+For ~15-min delayed real data without an IBKR account:
+
+```python
+chain = oc.fetch_chain("AAPL", provider="yfinance")
+```
+```bash
+pip install opticore[data-yfinance]
+```
+
 ## Interactive Brokers Integration
 
 ```python

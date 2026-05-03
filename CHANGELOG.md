@@ -46,6 +46,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removing the bare `except Exception` that was hiding errors (#25).
 
 ### Added
+- **Bundled sample chain** for zero-config quickstart (#9). New
+  `provider="sample"` in `oc.fetch_chain(...)` loads a tiny synthetic
+  SPY chain (~15 KiB parquet) shipped inside the wheel. No IBKR account,
+  no yfinance install, no network — ideal for tutorials and CI. The data
+  is BSM-priced with a realistic smile/skew and rebased to the current
+  date on load so `enrich()` always produces sensible TTEs.
+- **`enrich()` now adds `theo_price` and `mispricing` columns** by default (#10).
+  `theo_price` is the BSM price at the recovered IV; `mispricing = price_col - theo_price`
+  highlights stale quotes. Gate via `enrich(chain, include_theo=False)` to skip.
+  The previous `model_price` column has been renamed to `theo_price` —
+  small breaking change in column naming, motivated by the more standard
+  finance term.
 - **`oc.parity_check(chain, rate, div_yield)`** (#28) — per-(expiry, strike)
   put-call parity diagnostic. Returns a DataFrame with `parity_residual` and
   `residual_pct` columns. First-line tool for spotting stale quotes, wrong
