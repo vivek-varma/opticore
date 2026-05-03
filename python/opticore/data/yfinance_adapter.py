@@ -48,7 +48,8 @@ def fetch_yfinance_chain(
     pd.DataFrame
         Columns: ``symbol, strike, expiry, kind, bid, ask, last,
         volume, open_interest, underlying_price, mid``.
-        ``expiry`` is a ``YYYYMMDD`` string (matches the IBKR adapter).
+        ``expiry`` is a ``pd.Timestamp`` (UTC midnight on the listed
+        expiration date).
 
     Raises
     ------
@@ -123,7 +124,7 @@ def fetch_yfinance_chain(
             return 0
         return int(f)
 
-    def _row(r: pd.Series, kind: str, exp_norm: str) -> dict:
+    def _row(r: pd.Series, kind: str, exp_norm: pd.Timestamp) -> dict:
         bid = r.get("bid")
         ask = r.get("ask")
         last = r.get("lastPrice")
