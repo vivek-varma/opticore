@@ -46,6 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removing the bare `except Exception` that was hiding errors (#25).
 
 ### Added
+- **`oc.parity_check(chain, rate, div_yield)`** (#28) — per-(expiry, strike)
+  put-call parity diagnostic. Returns a DataFrame with `parity_residual` and
+  `residual_pct` columns. First-line tool for spotting stale quotes, wrong
+  rate/div assumptions, or mid-pricing mistakes in fetched chains.
+- **`oc.implied_forward(chain, rate)`** (#29) — recovers the implied forward
+  price F(T) and dividend yield q per expiry from put-call parity, averaged
+  across the N strikes nearest spot for stability. Round-trips a known q
+  within ~1bp on synthetic chains.
 - **yfinance provider** for `oc.fetch_chain()` — no account, no subscription,
   ~15-min delayed Yahoo data. Use via `provider="yfinance"`. Install with
   `pip install opticore[data-yfinance]`. IBKR remains the primary provider.

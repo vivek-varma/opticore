@@ -127,3 +127,15 @@ def enrich(
     div_yield: float = ...,
     price_col: str = ...,
 ) -> pd.DataFrame: ...
+def parity_check(
+    chain: pd.DataFrame,
+    rate: float = ...,
+    div_yield: float = ...,
+    price_col: str = ...,
+) -> pd.DataFrame: ...
+def implied_forward(
+    chain: pd.DataFrame,
+    rate: float = ...,
+    n_atm_strikes: int = ...,
+    price_col: str = ...,
+) -> pd.DataFrame: ...

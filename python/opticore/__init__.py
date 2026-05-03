@@ -375,7 +375,13 @@ def greeks_table(
 # Chain operations (pure Python, no C++ dependency)
 # Make plot submodule importable
 from opticore import plot  # noqa: F401, E402
-from opticore.chain import check_connection, enrich, fetch_chain  # noqa: E402
+from opticore.chain import (  # noqa: E402
+    check_connection,
+    enrich,
+    fetch_chain,
+    implied_forward,
+    parity_check,
+)
 
 __all__ = [
     "price",
@@ -384,6 +390,8 @@ __all__ = [
     "greeks_table",
     "fetch_chain",
     "enrich",
+    "parity_check",
+    "implied_forward",
     "check_connection",
     "GreeksResult",
     "Leg",

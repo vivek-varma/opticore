@@ -226,3 +226,235 @@ def enrich(
     logger.info("Enriched %d options, %d IV failures (%.1f%%)", n_success, n_failed, pct_failed)
 
     return df
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# Parity diagnostics
+# ════════════════════════════════════════════════════════════════════════════
+
+
+def _pivot_call_put(chain: pd.DataFrame, price_col: str) -> pd.DataFrame:
+    """Inner helper: align call/put rows side-by-side per (expiry, strike).
+
+    Returns a frame with columns: expiry, strike, underlying_price,
+    call_mid, put_mid (only rows where BOTH call and put exist).
+    """
+    df = chain.copy()
+    if price_col == "mid" and "mid" not in df.columns and {"bid", "ask"}.issubset(
+        df.columns
+    ):
+        df["mid"] = (df["bid"] + df["ask"]) / 2.0
+    if price_col not in df.columns:
+        raise KeyError(f"Chain has no {price_col!r} column.")
+
+    if df.empty or "kind" not in df.columns:
+        return pd.DataFrame(
+            columns=[
+                "expiry",
+                "strike",
+                "underlying_price",
+                "call_mid",
+                "put_mid",
+            ]
+        )
+
+    df["_kind"] = df["kind"].str.lower().map(
+        {"call": "call", "c": "call", "put": "put", "p": "put"}
+    )
+    keep = ["expiry", "strike", "underlying_price", "_kind", price_col]
+    sub = df[keep].dropna(subset=[price_col])
+
+    if sub.empty or sub["_kind"].nunique() < 2:
+        return pd.DataFrame(
+            columns=[
+                "expiry",
+                "strike",
+                "underlying_price",
+                "call_mid",
+                "put_mid",
+            ]
+        )
+
+    # Pivot kinds into columns; keep underlying_price (assumed constant per expiry)
+    pivot = sub.pivot_table(
+        index=["expiry", "strike"],
+        columns="_kind",
+        values=price_col,
+        aggfunc="first",
+    ).reset_index()
+
+    # Bring underlying_price back (first observed per expiry)
+    spot_per_expiry = (
+        sub.groupby("expiry")["underlying_price"].first().rename("underlying_price")
+    )
+    pivot = pivot.merge(spot_per_expiry, on="expiry", how="left")
+
+    pivot = pivot.dropna(subset=["call", "put"])
+    return pivot.rename(columns={"call": "call_mid", "put": "put_mid"})
+
+
+def parity_check(
+    chain: pd.DataFrame,
+    rate: float = 0.045,
+    div_yield: float = 0.0,
+    price_col: str = "mid",
+) -> pd.DataFrame:
+    """Compute per-(expiry, strike) put-call parity residuals.
+
+    Parity (Black-Scholes-Merton with continuous dividend yield)::
+
+        C - P = S * exp(-q*T) - K * exp(-r*T)
+
+    Large residuals indicate stale quotes, wide spreads, mid-pricing error,
+    or a wrong assumption about ``rate`` / ``div_yield``. This is the first
+    diagnostic to run when an enriched chain looks weird.
+
+    Parameters
+    ----------
+    chain : pd.DataFrame
+        Must have columns: ``expiry``, ``strike``, ``kind``,
+        ``underlying_price``, and the column named by ``price_col``
+        (or ``bid`` + ``ask`` to compute ``mid``).
+    rate : float
+        Risk-free rate (default: 0.045).
+    div_yield : float
+        Continuous dividend yield (default: 0.0).
+    price_col : str
+        Which price to use: 'mid' (default), 'last', 'bid', 'ask'.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns: expiry, strike, call_mid, put_mid,
+        parity_residual, residual_pct.
+        ``parity_residual = (C - P) - (S*exp(-q*T) - K*exp(-r*T))``.
+        ``residual_pct = residual / underlying_price * 100``.
+
+    Examples
+    --------
+    >>> import opticore as oc
+    >>> diag = oc.parity_check(chain, rate=0.05)  # doctest: +SKIP
+    >>> diag.nlargest(5, "residual_pct")          # doctest: +SKIP
+    """
+    p = _pivot_call_put(chain, price_col)
+    if p.empty:
+        return pd.DataFrame(
+            columns=[
+                "expiry",
+                "strike",
+                "call_mid",
+                "put_mid",
+                "parity_residual",
+                "residual_pct",
+            ]
+        )
+
+    # Time to expiry in years (accept Timestamp or legacy string)
+    now = datetime.now(timezone.utc)
+    expiry_dt = pd.to_datetime(p["expiry"], utc=True)
+    tte = (expiry_dt - now).dt.total_seconds() / (365.25 * 24 * 3600)
+    tte = tte.clip(lower=1e-6).to_numpy(dtype=np.float64)
+
+    S = p["underlying_price"].to_numpy(dtype=np.float64)
+    K = p["strike"].to_numpy(dtype=np.float64)
+    expected = S * np.exp(-div_yield * tte) - K * np.exp(-rate * tte)
+    actual = p["call_mid"].to_numpy(dtype=np.float64) - p["put_mid"].to_numpy(
+        dtype=np.float64
+    )
+    residual = actual - expected
+
+    out = p[["expiry", "strike", "call_mid", "put_mid"]].copy()
+    out["parity_residual"] = residual
+    out["residual_pct"] = residual / S * 100.0
+    return out.reset_index(drop=True)
+
+
+def implied_forward(
+    chain: pd.DataFrame,
+    rate: float = 0.045,
+    n_atm_strikes: int = 3,
+    price_col: str = "mid",
+) -> pd.DataFrame:
+    """Recover the implied forward price F(T) and dividend yield q per expiry.
+
+    From put-call parity::
+
+        C - P = exp(-r*T) * (F - K)
+        ⇒ F = K + exp(r*T) * (C - P)
+
+    Then::
+
+        F = S * exp((r - q) * T)
+        ⇒ q = r - ln(F / S) / T
+
+    For numerical stability, F is averaged across the ``n_atm_strikes``
+    strikes nearest the spot — these have the tightest (C - P) and least
+    bid/ask noise leverage.
+
+    Parameters
+    ----------
+    chain : pd.DataFrame
+        Same schema as ``parity_check`` / ``enrich``.
+    rate : float
+        Risk-free rate (default: 0.045). The implied yield is computed
+        relative to this — pass the same rate you'd use for ``enrich``.
+    n_atm_strikes : int
+        Number of strikes nearest spot used to average F per expiry (default: 3).
+    price_col : str
+        Which price to use (default: 'mid').
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns: expiry, tte, forward, implied_div_yield, n_strikes_used.
+
+    Examples
+    --------
+    >>> import opticore as oc
+    >>> oc.implied_forward(chain, rate=0.05)  # doctest: +SKIP
+    """
+    p = _pivot_call_put(chain, price_col)
+    if p.empty:
+        return pd.DataFrame(
+            columns=["expiry", "tte", "forward", "implied_div_yield", "n_strikes_used"]
+        )
+
+    now = datetime.now(timezone.utc)
+    expiry_dt = pd.to_datetime(p["expiry"], utc=True)
+    p = p.assign(
+        _tte=(expiry_dt - now).dt.total_seconds() / (365.25 * 24 * 3600)
+    )
+    # F per row from parity; average the k nearest spot per expiry.
+    p["_F_row"] = p["strike"] + np.exp(rate * p["_tte"]) * (
+        p["call_mid"] - p["put_mid"]
+    )
+    p["_dist"] = (p["strike"] - p["underlying_price"]).abs()
+
+    rows = []
+    for exp, grp in p.groupby("expiry", sort=True):
+        atm = grp.nsmallest(n_atm_strikes, "_dist")
+        if atm.empty:
+            continue
+        tte = float(atm["_tte"].iloc[0])
+        if tte <= 0:
+            continue
+        F = float(atm["_F_row"].mean())
+        S = float(atm["underlying_price"].iloc[0])
+        if F <= 0 or S <= 0:
+            q = float("nan")
+        else:
+            q = rate - np.log(F / S) / tte
+        rows.append(
+            {
+                "expiry": exp,
+                "tte": tte,
+                "forward": F,
+                "implied_div_yield": q,
+                "n_strikes_used": int(len(atm)),
+            }
+        )
+
+    return pd.DataFrame(
+        rows,
+        columns=["expiry", "tte", "forward", "implied_div_yield", "n_strikes_used"],
+    )
