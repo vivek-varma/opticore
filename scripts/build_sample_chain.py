@@ -9,8 +9,11 @@ SPY-like chain (BSM-priced with a smile/skew) so users without an IBKR
 account can still run `01_quickstart.ipynb` end-to-end. The data is clearly
 fake but mathematically consistent — IV recovers, parity holds.
 
-The output is a single parquet at:
-    python/opticore/data/sample_chain.parquet
+The output is a single CSV at:
+    python/opticore/data/sample_chain.csv
+
+Why CSV over parquet: keeps the wheel free of pyarrow/fastparquet
+dependencies. At ~370 rows the file is ~25 KiB — well within budget.
 
 Schema matches the live providers (ibkr, yfinance) exactly:
     symbol, expiry (UTC Timestamp), strike, kind, bid, ask, last, mid,
@@ -107,8 +110,8 @@ def main() -> Path:
 
     out_dir = Path(__file__).resolve().parents[1] / "python" / "opticore" / "data"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "sample_chain.parquet"
-    df.to_parquet(out_path, index=False, compression="zstd")
+    out_path = out_dir / "sample_chain.csv"
+    df.to_csv(out_path, index=False)
 
     print(f"Wrote {len(df)} rows to {out_path}")
     print(f"  expiries: {df['expiry'].nunique()}")

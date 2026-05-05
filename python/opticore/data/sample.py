@@ -33,16 +33,23 @@ _FIXTURE_AS_OF = pd.Timestamp("2026-04-15", tz="UTC")
 
 
 def _load_bundled() -> pd.DataFrame:
-    """Read the parquet that ships inside the package, rebased to today."""
+    """Read the bundled CSV that ships inside the package, rebased to today.
+
+    CSV (not parquet) so we don't drag pyarrow/fastparquet into the install
+    matrix — the file is tiny and CSV parses fine in stdlib pandas.
+    """
     pkg = resources.files("opticore.data")
-    with resources.as_file(pkg / "sample_chain.parquet") as path:
-        df = pd.read_parquet(path)
+    with resources.as_file(pkg / "sample_chain.csv") as path:
+        df = pd.read_csv(path, parse_dates=["expiry"])
+
+    # CSV round-trips dates as naive; restore the UTC timezone.
+    if df["expiry"].dt.tz is None:
+        df["expiry"] = df["expiry"].dt.tz_localize("UTC")
 
     # Shift every expiry forward by (now - fixture_as_of) so days-to-expiry
     # is preserved. This makes the synthetic chain "always fresh."
     now = pd.Timestamp.now(tz="UTC")
     delta = now - _FIXTURE_AS_OF
-    df = df.copy()
     df["expiry"] = df["expiry"] + delta
     return df
 
