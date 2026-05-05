@@ -197,16 +197,20 @@ def enrich(
     # propagation handles unsolvable rows: _implied_vol_batch returns NaN,
     # _greeks_batch then produces NaN price/greeks for those rows naturally.
     #
-    # Use Series.to_numpy() (not .values) — it's the stable pandas API and
-    # always returns a numpy.ndarray. In pandas 3.0+, .values can return an
-    # ExtensionArray which nanobind's strict ndarray check rejects.
-    # ascontiguousarray then guarantees C-contiguous layout (required by the
-    # C++ binding's `nb::c_contig` constraint).
-    prices = np.ascontiguousarray(df[price_col].to_numpy(dtype=np.float64, copy=False))
-    spots = np.ascontiguousarray(df["underlying_price"].to_numpy(dtype=np.float64, copy=False))
-    strikes = np.ascontiguousarray(df["strike"].to_numpy(dtype=np.float64, copy=False))
-    ttes = np.ascontiguousarray(df["tte"].to_numpy(dtype=np.float64, copy=False))
-    is_call_arr = np.ascontiguousarray(is_call.to_numpy(dtype=bool, copy=False))
+    # The C++ binding declares `nb::ndarray<double, nb::c_contig>` which is
+    # strict on dtype, alignment, C-contiguous layout, AND writeability.
+    # Pandas 3.0's `Series.to_numpy()` returns a read-only view by default
+    # (writeable=False), which nanobind rejects even though we only read
+    # from the array. `np.require` with "W" forces a writeable copy when
+    # needed; "C"/"A" handle layout + alignment in the same call.
+    def _coerce(series, dtype):
+        return np.require(series.to_numpy(), dtype=dtype, requirements=["C", "A", "W"])
+
+    prices = _coerce(df[price_col], np.float64)
+    spots = _coerce(df["underlying_price"], np.float64)
+    strikes = _coerce(df["strike"], np.float64)
+    ttes = _coerce(df["tte"], np.float64)
+    is_call_arr = _coerce(is_call, bool)
 
     iv_values = np.asarray(
         _implied_vol_batch(
