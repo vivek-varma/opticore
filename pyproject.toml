@@ -40,6 +40,8 @@ dev = [
     "opticore[all]",
     "pytest>=7.0",
     "pytest-benchmark",
+    "pytest-cov",
+    "hypothesis>=6.0",
     "ruff",
     "mypy",
 ]
@@ -70,6 +72,35 @@ select = ["E", "F", "I", "W"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
+# Skip benchmark tests by default — they're slow and only useful when
+# explicitly profiling. Enable with `pytest --run-benchmarks` or
+# `pytest -m benchmark`.
+addopts = "-m 'not benchmark'"
+markers = [
+    "benchmark: performance benchmarks (slow; run with --run-benchmarks)",
+]
+
+# ── coverage ──────────────────────────────────────────────────────────────────
+# Run with: pytest --cov=opticore --cov-report=term --cov-report=xml
+# CI fails the build if coverage drops below the floor in [tool.coverage.report].
+[tool.coverage.run]
+source = ["opticore"]
+branch = true
+omit = [
+    "*/data/ibkr.py",          # requires live IBKR connection to exercise
+    "*/data/yfinance_adapter.py",  # exercised end-to-end via mocks; module-level imports skew the metric
+]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
 
 # ── mypy ──────────────────────────────────────────────────────────────────────
 # We ship a `py.typed` marker + .pyi stubs for the public API. These settings

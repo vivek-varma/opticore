@@ -46,6 +46,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removing the bare `except Exception` that was hiding errors (#25).
 
 ### Added
+- **Test coverage gate** (#8) — CI runs `pytest --cov=opticore` on the
+  ubuntu/3.12 job and fails if coverage drops below 85% (currently ~94%).
+  `pytest-cov` added to the dev extra; configuration in `[tool.coverage.*]`.
+  Codecov badge on README.
+- **Hypothesis property-based tests** (#6) — `tests/python/test_properties.py`
+  fuzzes 100 examples per property: put-call parity, monotonicity in spot,
+  vectorized == scalar, IV round-trip. Catches edge cases hand-written
+  tests miss. `hypothesis>=6.0` added to the dev extra.
+- **Benchmark suite** (#7) — `tests/python/test_benchmarks.py` measures
+  scalar/batch pricing, IV solving, and full Greeks at 10k options, with
+  optional head-to-head against `py_vollib`. Tagged with `@pytest.mark.benchmark`
+  and skipped from the default run; opt-in via `pytest -m benchmark`.
+- **Extended IV round-trip coverage** (#5) — `tests/python/test_iv_roundtrip.py`
+  adds 60 assertions across moneyness sweeps, vol sweeps, a 2D grid, and
+  NaN-propagation cases (zero expiry, negative price, arbitrage bounds,
+  mixed-validity arrays).
 - **Bundled sample chain** for zero-config quickstart (#9). New
   `provider="sample"` in `oc.fetch_chain(...)` loads a tiny synthetic
   SPY chain (~15 KiB parquet) shipped inside the wheel. No IBKR account,

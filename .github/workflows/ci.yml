@@ -64,6 +64,21 @@ jobs:
       - name: Run tests
         run: pytest tests/python/ -v --junitxml=pytest-results.xml
 
+      - name: Coverage report (gate at 85%)
+        # Only run on the canonical job to keep cross-OS noise out of the
+        # coverage badge / Codecov upload. Threshold is enforced in
+        # pyproject.toml [tool.coverage.report] fail_under.
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        run: |
+          pytest tests/python/ --cov=opticore --cov-report=term --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false  # don't fail CI if Codecov is flaky
+
       - name: Upload Python test results on failure
         if: failure()
         uses: actions/upload-artifact@v4

@@ -13,8 +13,14 @@ pip install -e ".[dev]"
 ## Running tests
 
 ```bash
-# Python tests
+# Python tests (excludes slow benchmarks by default)
 pytest tests/python/ -v
+
+# Coverage report (CI gates at 85%)
+pytest tests/python/ --cov=opticore --cov-report=term
+
+# Performance benchmarks (opt-in; takes ~30s)
+pytest tests/python/test_benchmarks.py -m benchmark --benchmark-only
 
 # C++ tests
 cmake -B build -DOPTICORE_BUILD_TESTS=ON
