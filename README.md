@@ -2,10 +2,12 @@
 
 **High-performance options pricing, IV solver, and Greeks — C++20 core with a Pythonic API.**
 
+[![PyPI](https://img.shields.io/pypi/v/opticore.svg)](https://pypi.org/project/opticore/)
+[![Python](https://img.shields.io/pypi/pyversions/opticore.svg)](https://pypi.org/project/opticore/)
+[![Downloads](https://static.pepy.tech/badge/opticore/month)](https://pepy.tech/project/opticore)
 [![CI](https://github.com/vivek-varma/opticore/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/vivek-varma/opticore/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/vivek-varma/opticore/branch/main/graph/badge.svg)](https://codecov.io/gh/vivek-varma/opticore)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/opticore/)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)]()
 
 ---

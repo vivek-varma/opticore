@@ -47,9 +47,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/opticore/opticore"
-Documentation = "https://opticore.readthedocs.io"
-Repository = "https://github.com/opticore/opticore"
+Homepage = "https://github.com/vivek-varma/opticore"
+Repository = "https://github.com/vivek-varma/opticore"
+Issues = "https://github.com/vivek-varma/opticore/issues"
+Changelog = "https://github.com/vivek-varma/opticore/blob/main/CHANGELOG.md"
 
 [tool.scikit-build]
 minimum-version = "0.9"
