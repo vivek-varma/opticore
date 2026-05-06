@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & Discussion
+    url: https://github.com/vivek-varma/opticore/discussions
+    about: Please ask and answer general questions here.
+  - name: Security Vulnerabilities
+    url: https://github.com/vivek-varma/opticore/security/advisories/new
+    about: Please report security issues privately using this form.
