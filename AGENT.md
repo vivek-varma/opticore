@@ -1,8 +1,8 @@
 # AGENT.md — Project context for AI assistants
 
-> **Purpose:** This file is read at the start of every AI-assistant session (Claude Code, Cursor, Windsurf, Aider, etc.) to restore project context. Keep it accurate. Update the "Where we left off" section at the end of each working session.
+> **Purpose:** This file is read at the start of every AI-assistant session (Claude Code, Cursor, Windsurf, Aider, OpenAI Codex, etc.) to restore project context. Keep it accurate. Update the "Where we left off" section at the end of each working session.
 >
-> **Using Claude Code?** Run `ln -s AGENT.md CLAUDE.md` once in the repo root so Claude Code auto-loads this file. The symlink is gitignored (per-user).
+> `CLAUDE.md` and `AGENTS.md` are checked-in symlinks pointing here, so any AI tool that auto-discovers either filename gets the same context. See also `llms.txt` for a more concise machine-readable entry point.
 
 ---
 

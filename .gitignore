@@ -42,8 +42,6 @@ htmlcov/
 # Notebooks
 .ipynb_checkpoints/
 
-HANDOFF_TO_CLAUDE_CODE.md
-
 # Secrets / credentials (never commit)
 .env
 .env.*
@@ -65,8 +63,8 @@ TODO_local.md
 .cursor/
 .aider*
 
-# Tool-specific symlinks to AGENT.md (create locally: `ln -s AGENT.md CLAUDE.md`)
-/CLAUDE.md
+# CLAUDE.md and AGENTS.md are checked-in symlinks → AGENT.md, so AI tools
+# (Claude Code, OpenAI Codex, etc.) auto-load project context on a fresh clone.
 
 # Internal maintainer docs (not for public repo)
 /RELEASING.md

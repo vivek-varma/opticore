@@ -46,6 +46,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removing the bare `except Exception` that was hiding errors (#25).
 
 ### Added
+- **AI-agent discoverability** (#34) — repo now ships `llms.txt` (concise
+  machine-readable entry point per llmstxt.org), checked-in `CLAUDE.md`
+  and `AGENTS.md` symlinks → `AGENT.md` (so Claude Code, OpenAI Codex,
+  and any other tool that auto-loads either filename gets project context
+  on a fresh clone), and an `examples/` directory with four runnable
+  scripts (`01_price_one_option.py`, `02_implied_vol.py`,
+  `03_chain_with_sample_data.py`, `04_strategy_payoff.py`). All examples
+  run in <1s with no network or external account.
+- **Cleanup** (#34): removed stale bootstrap docs (`HANDOFF_TO_CLAUDE_CODE.md`,
+  `TEST_RESULTS.md`) — content superseded by `AGENT.md`, `ROADMAP.md`, and
+  the `docs/decisions/` ADRs.
 - **Type stubs for `chain` and `plot` modules** (#30) — adds
   `python/opticore/chain.pyi` and `python/opticore/plot.pyi` so mypy /
   IDE users see real types (not `Any`) for `oc.fetch_chain`, `oc.enrich`,

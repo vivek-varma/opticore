@@ -1,0 +1,132 @@
+# OptiCore
+
+> High-performance options pricing, IV solver, and Greeks. C++20 numerical
+> core with a Pythonic API. Black-Scholes-Merton with full machine
+> precision, vectorized over NumPy arrays, with batteries-included data
+> adapters and plotting helpers. Apache-2.0.
+
+## Install
+
+```bash
+pip install opticore                  # core (numpy, pandas)
+pip install opticore[viz]             # + matplotlib for plot helpers
+pip install opticore[ibkr]            # + Interactive Brokers via ib_async
+pip install opticore[data-yfinance]   # + Yahoo Finance (~15-min delayed)
+pip install opticore[all]             # everything above
+```
+
+Requires Python 3.10–3.13 on Linux, macOS, or Windows. The wheel ships a
+prebuilt C++ extension; no compiler needed at install time.
+
+## Public API (9 functions, locked scope)
+
+```python
+import opticore as oc
+
+# 1. Price a European call/put
+oc.price(spot, strike, expiry, rate, vol, kind="call", div_yield=0.0) -> float | ndarray
+
+# 2. Implied volatility (Newton + bisection, machine precision)
+oc.iv(price, spot, strike, expiry, rate, kind="call", div_yield=0.0) -> float | ndarray
+
+# 3. All Greeks in a single pass
+oc.greeks(spot, strike, expiry, rate, vol, kind, div_yield) -> GreeksResult
+oc.greeks_table(...) -> pd.DataFrame  # vectorized over arrays
+
+# 4. Option chains
+oc.fetch_chain(symbol, provider="ibkr" | "yfinance" | "sample", ...) -> pd.DataFrame
+oc.enrich(chain, rate, div_yield, include_theo=True) -> pd.DataFrame  # adds IV, Greeks, theo_price, mispricing
+
+# 5. Diagnostics
+oc.parity_check(chain, rate, div_yield) -> pd.DataFrame      # put-call parity residuals
+oc.implied_forward(chain, rate) -> pd.DataFrame              # F(T) and implied div yield per expiry
+
+# 6. Plotting (returns matplotlib (Figure, Axes))
+oc.plot.smile(enriched_df, expiry=None, x="strike")
+oc.plot.payoff(legs)            # legs: list[oc.Leg(kind, strike, qty, premium)]
+oc.plot.greek(name, spot_range, strike, expiry, rate, vol, kind="both")
+```
+
+All scalar paths accept `kind="call"` or `kind="put"`. All numeric inputs
+(`spot`, `strike`, `expiry`, `vol`, `price`) accept either Python floats
+or NumPy arrays — the dispatch is automatic.
+
+## Quickstart with no account, no network
+
+```python
+import opticore as oc
+
+chain = oc.fetch_chain(provider="sample", symbol="SPY")  # bundled fixture
+enriched = oc.enrich(chain, rate=0.045, div_yield=0.013)
+oc.plot.smile(enriched)
+```
+
+The `sample` provider ships a 28 KiB synthetic SPY chain inside the
+wheel. BSM-priced with a realistic smile/skew. Date-rebased on load so
+TTEs stay sensible. Use it for examples, CI, and tutorials.
+
+## Source layout (where to read code, not where to edit blindly)
+
+```
+python/opticore/             # Public Python API — start here for API questions
+  __init__.py                  price, iv, greeks, greeks_table, Leg, GreeksResult
+  __init__.pyi                 type stubs (PEP 561)
+  chain.py                     fetch_chain, enrich, parity_check, implied_forward
+  chain.pyi                    type stubs for chain.py
+  plot.py                      smile, payoff, greek
+  plot.pyi                     type stubs for plot.py
+  data/sample.py               bundled SPY fixture provider
+  data/ibkr.py                 IBKR adapter (ib_async, ephemeral connection)
+  data/yfinance_adapter.py     Yahoo Finance adapter
+
+src/                         # C++20 core — DO NOT EDIT WITHOUT READING ADR-0001..0005
+  bindings.cpp                 nanobind bindings (zero-copy NumPy ↔ std::span)
+  bsm.cpp                      Black-Scholes-Merton pricer
+  jaeckel.cpp                  IV solver (Newton + bisection)
+  greeks.cpp                   analytic Greeks, single-pass
+include/opticore/
+  math.hpp                     norm_cdf, norm_pdf, norm_inv
+
+tests/python/                # 280 tests, ~94% coverage
+tests/cpp/                   # 96 tests / 1653 assertions, multiple RNG seeds
+docs/decisions/              # 5 ADRs locking the major design choices
+```
+
+## What an agent should NOT touch without explicit human approval
+
+- `tests/cpp/reference_values.hpp` — hand-verified at full precision
+- The numerical tolerance ladder in `AGENT.md` § Testing accuracy
+- Anything in `src/` C++ core — read ADRs first
+- `python/opticore/_core.pyi` — generated from C++ bindings
+- The 9 public function signatures — they're API contract; breaking them needs an ADR
+
+## Common gotchas
+
+- nanobind ndarray inputs require dtype=float64, C-contiguous, AND writeable;
+  `np.require(arr, dtype=np.float64, requirements=["C", "A", "W"])` is the canonical coercion.
+- `ib_async` calls `asyncio.run()` internally — patched in `data/ibkr.py` for Jupyter.
+- IV solver returns NaN (not exceptions) for arbitrage-violating prices —
+  see ADR-0002.
+- Pandas 3.0+ `Series.to_numpy()` returns read-only views by default;
+  `np.require(..., "W")` handles this.
+
+## Deeper context
+
+- `AGENT.md` — full project-context dump (architecture, gotchas, "where we left off")
+- `ROADMAP.md` — Phase 2+ scope (vol surfaces, Heston, MC, etc.)
+- `CHANGELOG.md` — release notes
+- `CONTRIBUTING.md` — build & test commands
+- `RELEASING.md` — maintainer release flow (gitignored, local-only)
+- `docs/decisions/` — ADR-0001 through ADR-0005
+
+## Tests
+
+```bash
+pytest tests/python/                                          # default suite, ~1.5s
+pytest tests/python/ --cov=opticore --cov-report=term         # coverage (gate: 85%, currently ~94%)
+pytest tests/python/test_benchmarks.py -m benchmark           # performance benchmarks (opt-in)
+mypy --strict tests/python/typing/check_strict_api.py         # type-stub regression check
+./build_and_test.sh                                           # C++ tests
+```
+
+CI runs all of the above on Linux + macOS + Windows × Python 3.10–3.13.
