@@ -46,6 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removing the bare `except Exception` that was hiding errors (#25).
 
 ### Added
+- **Type stubs for `chain` and `plot` modules** (#30) — adds
+  `python/opticore/chain.pyi` and `python/opticore/plot.pyi` so mypy /
+  IDE users see real types (not `Any`) for `oc.fetch_chain`, `oc.enrich`,
+  `oc.parity_check`, `oc.implied_forward`, and the three plot helpers.
+  `check_connection` now returns a `ConnectionStatus` TypedDict with
+  autocomplete on the four keys. New `tests/python/typing/check_strict_api.py`
+  is a `mypy --strict` smoke test exercising all 9 public APIs; CI gates
+  on it (ubuntu/3.12 only) so the stubs can't drift.
 - **Test coverage gate** (#8) — CI runs `pytest --cov=opticore` on the
   ubuntu/3.12 job and fails if coverage drops below 85% (currently ~94%).
   `pytest-cov` added to the dev extra; configuration in `[tool.coverage.*]`.

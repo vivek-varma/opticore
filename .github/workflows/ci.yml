@@ -64,6 +64,14 @@ jobs:
       - name: Run tests
         run: pytest tests/python/ -v --junitxml=pytest-results.xml
 
+      - name: Type-check public API with mypy --strict (Issue #30)
+        # Runs only on the canonical job — strict-mode mypy on the typing
+        # smoke test catches any regression in the .pyi stubs (chain.pyi,
+        # plot.pyi, __init__.pyi). The smoke test exercises every public
+        # function so a missing/loose stub fails CI here.
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        run: mypy --strict tests/python/typing/check_strict_api.py
+
       - name: Coverage report (gate at 85%)
         # Only run on the canonical job to keep cross-OS noise out of the
         # coverage badge / Codecov upload. Threshold is enforced in

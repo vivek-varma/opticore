@@ -19,6 +19,7 @@ import pandas as pd
 from numpy.typing import ArrayLike, NDArray
 
 from opticore import plot as plot
+from opticore.chain import ConnectionStatus as ConnectionStatus
 
 __version__: str
 
@@ -112,7 +113,7 @@ def check_connection(
     port: int = ...,
     client_id: int = ...,
     timeout: float = ...,
-) -> dict: ...
+) -> ConnectionStatus: ...
 def fetch_chain(
     symbol: str,
     provider: str = ...,
