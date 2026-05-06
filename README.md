@@ -180,6 +180,10 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
 Apache-2.0 — use freely in commercial and open-source projects.
 
+## Star history
+
+[![Star history](https://api.star-history.com/svg?repos=vivek-varma/opticore&type=Date)](https://star-history.com/#vivek-varma/opticore&Date)
+
 ---
 
 **⭐ Star this repo if you find it useful — it helps others discover it!**
