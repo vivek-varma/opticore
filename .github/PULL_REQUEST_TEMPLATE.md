@@ -7,7 +7,7 @@ Please review the [AGENT.md](https://github.com/vivek-varma/opticore/blob/main/A
 - [ ] Tests added / updated — C++ tests pass (`./build_and_test.sh`) and Python tests pass (`pytest tests/python/`)
 - [ ] Numerical accuracy verified (see tolerance ladder in AGENT.md — do not tighten tolerances without asking)
 - [ ] CHANGELOG.md updated with a brief description of the change
-- [ ] Lint clean (`cmake --build build --target lint 2>/dev/null || cmake --build build 2>&1 | grep -v "^--"`)
+- [ ] Lint clean (`ruff check python/ tests/ 2>/dev/null && ruff format --check python/ tests/`)
 - [ ] If changing the Python API: `python -c "import opticore; print(opticore.__version__)"` works
 - [ ] If adding C++ code: new symbols are exported in `src/bindings.cpp` with nanobind ndarray tag
 - [ ] This PR targets the `main` branch

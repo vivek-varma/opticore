@@ -14,7 +14,7 @@ body:
     attributes:
       label: OptiCore version
       description: Run `pip show opticore` or check `pyproject.toml`
-      placeholder: e.g., 0.1.0
+      placeholder: e.g., 0.2.0
     validations:
       required: true
 
