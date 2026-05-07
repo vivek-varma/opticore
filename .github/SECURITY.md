@@ -8,6 +8,7 @@ If you discover a security vulnerability within OptiCore, please report it respo
 
 **Private vulnerability reporting (preferred):**
 Use GitHub's [Private vulnerability reporting](https://github.com/vivek-varma/opticore/security/advisories/new) form to report the issue directly to the maintainers.
+Please do **not** report security vulnerabilities via public GitHub issues.
 
 **Disclosure Policy:**
 

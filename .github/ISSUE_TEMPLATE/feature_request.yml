@@ -30,10 +30,12 @@ body:
   - type: textarea
     id: proposed-solution
     attributes:
-      label: Proposed solution
-      description: A clear and concise description of what you want to happen
+      label: Proposed API / solution
+      description: |
+        Describe the API shape you want (function/class/signature) and expected behavior.
       placeholder: |
         Add a function `oc.XXX(...)` that ...
+        Provide function signatures, parameter types, and expected return values.
     validations:
       required: true
 
