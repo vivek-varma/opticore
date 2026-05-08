@@ -1,0 +1,66 @@
+name: Feature request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["type:feature"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in improving OptiCore!
+
+        **Note:** Phase 1 is locked. New features outside Phase 1's 6-function scope
+        will be deferred. Please open an issue to discuss before submitting a PR.
+
+        See [ROADMAP.md](https://github.com/vivek-varma/opticore/blob/main/ROADMAP.md) for details.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: |
+        Why is this feature needed? What problem does it solve?
+        What use case does it enable?
+      placeholder: |
+        I want to use OptiCore to ...
+        Currently I have to ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed API / solution
+      description: |
+        Describe the API shape you want (function/class/signature) and expected behavior.
+      placeholder: |
+        Add a function `oc.XXX(...)` that ...
+        Provide function signatures, parameter types, and expected return values.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: |
+        What alternatives have you considered?
+        Why is this the best option?
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context or mockups about the feature request here
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: phase-1-scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This feature is within Phase 1's 6-function scope (price, iv, greeks, greeks_table, fetch_chain, enrich) — OR — I have discussed this in an issue and gotten agreement to proceed
+          required: true
