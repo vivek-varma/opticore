@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removing the bare `except Exception` that was hiding errors (#25).
 
 ### Added
+- **Community health files** (#33) — added `SECURITY.md`,
+  `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), structured issue
+  templates (bug + feature), and a PR template under `.github/`.
+  Brings the GitHub community profile to 100%.
 - **AI-agent discoverability** (#34) — repo now ships `llms.txt` (concise
   machine-readable entry point per llmstxt.org), checked-in `CLAUDE.md`
   and `AGENTS.md` symlinks → `AGENT.md` (so Claude Code, OpenAI Codex,
